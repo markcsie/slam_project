@@ -8,12 +8,14 @@ find_package(catkin REQUIRED
   message_generation
 )
 
+find_package(Eigen3 REQUIRED)
+
 ## Declare ROS messages and services
 #add_message_files(FILES)
 #add_service_files(FILES)
 
 ## Generate added messages and services
-generate_messages(DEPENDENCIES std_msgs)
+#generate_messages(DEPENDENCIES std_msgs)
 
 ## Declare a catkin package
 catkin_package(
@@ -39,6 +41,7 @@ SET(CMAKE_EXE_LINKER_FLAGS
 
 include_directories(include 
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 link_directories(
@@ -53,8 +56,11 @@ target_link_libraries(data_reader_node
   ${catkin_LIBRARIES}
 )
 
-add_dependencies(data_reader_node 
-  data_reader_generate_messages_cpp
+add_executable(slam_runner_node 
+  src/slam_runner.cpp
+  src/fast_slam2.cpp
 )
 
-
+target_link_libraries(slam_runner_node
+  ${catkin_LIBRARIES}
+)
