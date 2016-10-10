@@ -6,7 +6,7 @@
 class SlamRunner
 {
 public:
-  SlamRunner(size_t num_particles);
+  SlamRunner(const size_t &num_particles, const double &initial_w);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
@@ -16,8 +16,8 @@ private:
   FastSlam2 fast_slam2_;
 };
 
-SlamRunner::SlamRunner(size_t num_particles)
-: fast_slam2_(num_particles)
+SlamRunner::SlamRunner(const size_t &num_particles, const double &initial_w)
+: fast_slam2_(num_particles, initial_w)
 {
 
 }
@@ -48,9 +48,14 @@ int main(int argc, char **argv)
   int num_particles;
   node.param<int>("num_particles", num_particles, 100);
   std::cout << "num_particles " << num_particles << std::endl;
-  assert(num_particles > 0);
+  ROS_ASSERT(num_particles > 0);
 
-  SlamRunner slam_runner(num_particles);
+  double initial_w;
+  node.param<double>("initial_w", initial_w, 1.0);
+  std::cout << "initial_w " << initial_w << std::endl;
+  ROS_ASSERT(initial_w > 0);
+
+  SlamRunner slam_runner(num_particles, initial_w);
 
   ros::Subscriber frame_sub = node.subscribe("TODO", 1, &SlamRunner::frameCallback, &slam_runner);
 
