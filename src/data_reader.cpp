@@ -116,6 +116,7 @@ int main(int argc, char **argv) {
   ROS_INFO("start spinning");
 
   while (ros::ok()) {
+   
     ros::spinOnce(); // check for incoming messages
     rate.sleep();
   }
