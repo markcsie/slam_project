@@ -1,14 +1,20 @@
 #include <ros/ros.h>
-#include "data_reader.h"
+#include "../include/data_reader.h"
+#include "slam_project/Robot_GroundTruth.h"
+#include "slam_project/Robot_Odometry.h"
+vector<measure> robot_measurment;
+vector<odometry> robot_odometry;
+vector<groundtruth> robot_groundtruth;
+vector<int> subject;
+vector<landmark> landmark_groundtruth;
 
-int main(int argc, char **argv) {
-  ros::init(argc, argv, "data_reader");
-  ros::NodeHandle node;
 
+//robot_measurement robot_odometry robot_groundtruth subject landmark_groundtruth
+void readData(){
   //read data
-  vector<measure> robot_measurment;
-  ifstream file1("newRobot1_Measurement.txt");
-  ifstream file1_2("newRobot1_Measurement.txt");
+  //vector<measure> robot_measurment;
+  ifstream file1("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Measurement.txt");
+  ifstream file1_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Measurement.txt");
   int line_count1 = 0;
   string line1;
   double m_time, m_range, m_bearing;
@@ -29,9 +35,9 @@ int main(int argc, char **argv) {
   file1_2.close();
 
   //odometry
-  vector<odometry> robot_odometry;
-  ifstream file2("newRobot1_Odometry.txt");
-  ifstream file2_2("newRobot1_Odometry.txt");
+  //vector<odometry> robot_odometry;
+  ifstream file2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Odometry.txt");
+  ifstream file2_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Odometry.txt");
   int line_count2 = 0;
   string line2;
   double o_time, o_forward_velocity, o_angular_velocity;
@@ -50,9 +56,9 @@ int main(int argc, char **argv) {
   file2_2.close();
 
   //groundtruth
-  vector<groundtruth> robot_groundtruth;
-  ifstream file3("newRobot1_Groundtruth.txt");
-  ifstream file3_2("newRobot1_Groundtruth.txt");
+  //vector<groundtruth> robot_groundtruth;
+  ifstream file3("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Groundtruth.txt");
+  ifstream file3_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Groundtruth.txt");
   int line_count3 = 0;
   string line3;
   double g_time, g_x, g_y, g_orientation;
@@ -72,9 +78,9 @@ int main(int argc, char **argv) {
   file3_2.close();
 
   //barcode
-  vector<int> subject;
-  ifstream file4("Barcodes.dat");
-  ifstream file4_2("Barcodes.dat");
+  //vector<int> subject;
+  ifstream file4("/home/bricy/catkin_ws/src/slam_project/data/Barcodes.dat");
+  ifstream file4_2("/home/bricy/catkin_ws/src/slam_project/data/Barcodes.dat");
   subject.push_back(0);
   int line_count4 = 0;
   string line4;
@@ -89,9 +95,9 @@ int main(int argc, char **argv) {
   file4_2.close();
 
   //Landmark_Groundtruth
-  vector<landmark> landmark_groundtruth;
-  ifstream file5("Landmark_Groundtruth.dat");
-  ifstream file5_2("Landmark_Groundtruth.dat");
+  //vector<landmark> landmark_groundtruth;
+  ifstream file5("/home/bricy/catkin_ws/src/slam_project/data/Landmark_Groundtruth.dat");
+  ifstream file5_2("/home/bricy/catkin_ws/src/slam_project/data/Landmark_Groundtruth.dat");
   string line5;
   int line5_count;
   double l_x, l_y, l_xstd_dev, l_ystd_dev;
@@ -112,11 +118,41 @@ int main(int argc, char **argv) {
   file5_2.close();
 
 
-  ros::Rate rate(1.0);
-  ROS_INFO("start spinning");
+}
 
+int main(int argc, char **argv) {
+  readData();
+  ros::init(argc, argv, "data_reader");
+  ros::NodeHandle node;
+
+  ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 1000);
+  ros::Publisher dataPublisher3 = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg3", 1000);
+  
+
+  ros::Rate rate(50);
+  ROS_INFO("start spinning");
+  int i=0,j=0;
   while (ros::ok()) {
-   
+    if (i<robot_groundtruth.size()){
+      slam_project::Robot_GroundTruth msg;
+      msg.time = robot_groundtruth[i].time;
+      msg.x = robot_groundtruth[i].x;
+      msg.y = robot_groundtruth[i].y;
+      msg.orientation = robot_groundtruth[i].orientation;
+      i++;  
+      std::cout<<"time: "<<msg.time<<" "<<msg.x<<" "<<msg.y<<" "<<msg.orientation<<endl;
+      dataPublisher3.publish(msg);
+    }
+
+    if (j<robot_odometry.size()){
+      slam_project::Robot_Odometry msg_odometry;
+      msg_odometry.time = robot_odometry[j].time;
+      msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
+      msg_odometry.angular_veolocity = robot_odometry[j].angular_veolocity;
+      j++;
+      cout<<"time: "<<msg_odometry.time<<" "<<msg_odometry.forward_velocity<<endl;
+      dataPublisher2.publish(msg_odometry);
+    }
     ros::spinOnce(); // check for incoming messages
     rate.sleep();
   }

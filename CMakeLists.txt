@@ -11,11 +11,18 @@ find_package(catkin REQUIRED
 find_package(Eigen3 REQUIRED)
 
 ## Declare ROS messages and services
-#add_message_files(FILES)
+add_message_files(
+  FILES
+  Robot_GroundTruth.msg
+  Robot_Odometry.msg
+)
 #add_service_files(FILES)
 
 ## Generate added messages and services
-#generate_messages(DEPENDENCIES std_msgs)
+generate_messages(
+  DEPENDENCIES 
+  std_msgs
+)
 
 ## Declare a catkin package
 catkin_package(
@@ -47,6 +54,15 @@ include_directories(include
 link_directories(
    ${catkin_LIBRARY_DIRS}
 )
+
+add_executable(data_receive_node
+  src/data_receive.cpp
+)
+
+target_link_libraries(data_receive_node
+  ${catkin_LIBRARIES}
+)
+
 
 add_executable(data_reader_node 
   src/data_reader.cpp

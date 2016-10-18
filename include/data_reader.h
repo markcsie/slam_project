@@ -20,7 +20,7 @@ struct odometry{
 	double angular_veolocity;
 };
 
-//Time [s]    x [m]    y [m]    orientation [rad] 
+//robot_groundtruth Time [s]    x [m]    y [m]    orientation [rad] 
 struct groundtruth{
 	int id;
 	double time;
