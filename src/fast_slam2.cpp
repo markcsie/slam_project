@@ -1,13 +1,18 @@
 #include "fast_slam2.h"
 
-FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w) :
-particles_(num_particles), initial_w_(initial_w)
+#include <iostream>
+
+#include "utils/eigenmvn.h"
+
+FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, const size_t &x_dim, const size_t &u_dim, const size_t &z_dim, const size_t &m_dim) :
+particles_(num_particles), initial_w_(initial_w), x_dim_(x_dim), u_dim_(u_dim), z_dim_(z_dim), m_dim_(m_dim)
 {
 
 }
 
-FastSlam2::FastSlam2(const FastSlam2& orig)
+FastSlam2::FastSlam2(const FastSlam2& other)
 {
+  // TODO:
 }
 
 FastSlam2::~FastSlam2()
@@ -16,6 +21,15 @@ FastSlam2::~FastSlam2()
 
 void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
 {
+  // Testing
+  Eigen::VectorXd mean(2);
+  mean << 100, 1;
+  Eigen::MatrixXd cov(2, 2);
+  cov << 1, 0,
+          0, 1;
+  std::cout << samplePoseGaussian(mean, cov) << std::endl;
+  std::cout << samplePoseGaussian(mean, cov) << std::endl;
+
   // implement the algorithm in Table 13.3
   for (size_t k = 0; k < particles_.size(); k++)
   {
@@ -23,7 +37,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   }
   // resampling
   std::vector<double> weights(particles_.size());
-  for (size_t i = 0; i < weights.size(); i++) 
+  for (size_t i = 0; i < weights.size(); i++)
   {
     weights[i] = particles_[i].w_;
   }
@@ -46,8 +60,8 @@ Eigen::VectorXd FastSlam2::samplePose(const Eigen::VectorXd &x, const Eigen::Vec
 Eigen::VectorXd FastSlam2::samplePoseGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance)
 {
   // x ~ N(mean, covariance)
-  Eigen::VectorXd x;
-  return x;
+  Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
+  return norm.samples(1);
 }
 
 Eigen::VectorXd FastSlam2::predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
@@ -66,19 +80,24 @@ Eigen::VectorXd FastSlam2::predictMeasurement(const Eigen::VectorXd &mean, const
 
 Eigen::VectorXd FastSlam2::inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z)
 {
+  // mean_t = h^{-1}(x_t, z_t))
   Eigen::VectorXd mean;
   return mean;
 }
 
 Eigen::MatrixXd FastSlam2::jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
 {
-  Eigen::MatrixXd H_x;
+  Eigen::MatrixXd H_x(z_dim_, x_dim_);
+  double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);
+  H_x << -(mean[0] - x[0]) / std::sqrt(q), -(mean[1] - x[1]) / std::sqrt(q), 0,
+          (mean[1] - x[1]) / q, -(mean[0] - x[0]) / q, -1;
   return H_x;
 }
 
 Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
 {
-  Eigen::MatrixXd H_m;
+  Eigen::MatrixXd H_m(z_dim_, m_dim_);
+
   return H_m;
 }
 

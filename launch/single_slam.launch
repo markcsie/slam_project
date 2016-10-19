@@ -1,0 +1,7 @@
+<launch>
+<!--
+  <node name="data_reader_node" pkg="slam_project" type="data_reader_node" />
+  <node name="data_receive_node" pkg="slam_project" type="data_receive_node" />
+-->
+  <node name="slam_runner_node" pkg="slam_project" type="slam_runner_node" output="screen" />
+</launch>

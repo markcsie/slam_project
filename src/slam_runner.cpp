@@ -6,7 +6,7 @@
 class SlamRunner
 {
 public:
-  SlamRunner(const size_t &num_particles, const double &initial_w);
+  SlamRunner(const size_t &num_particles, const double &initial_w, const size_t &x_dim, const size_t &u_dim, const size_t &z_dim, const size_t &m_dim);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
@@ -16,10 +16,12 @@ private:
   FastSlam2 fast_slam2_;
 };
 
-SlamRunner::SlamRunner(const size_t &num_particles, const double &initial_w)
-: fast_slam2_(num_particles, initial_w)
+SlamRunner::SlamRunner(const size_t &num_particles, const double &initial_w, const size_t &x_dim, const size_t &u_dim, const size_t &z_dim, const size_t &m_dim)
+: fast_slam2_(num_particles, initial_w, x_dim, u_dim, z_dim, m_dim)
 {
-
+  Eigen::VectorXd u;
+  Eigen::MatrixXd z;
+  fast_slam2_.process(u, z);
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other)
@@ -55,7 +57,7 @@ int main(int argc, char **argv)
   std::cout << "initial_w " << initial_w << std::endl;
   ROS_ASSERT(initial_w > 0);
 
-  SlamRunner slam_runner(num_particles, initial_w);
+  SlamRunner slam_runner(num_particles, initial_w, 3, 2, 2, 2); // TODO: dimension depends on the incoming data
 
   ros::Subscriber frame_sub = node.subscribe("TODO", 1, &SlamRunner::frameCallback, &slam_runner);
 
