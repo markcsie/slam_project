@@ -4,7 +4,7 @@
 
 #include "utils/eigenmvn.h"
 
-FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map) :
+FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
 particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
 {
 
@@ -17,16 +17,6 @@ FastSlam2::FastSlam2(const FastSlam2& other)
 
 FastSlam2::~FastSlam2()
 {
-  if (robot_ != nullptr)
-  {
-    delete robot_;
-    robot_ = nullptr;
-  }
-  if (map_ != nullptr)
-  {
-    delete map_;
-    map_ = nullptr;
-  }
 }
 
 void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
@@ -60,44 +50,44 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   particles_ = new_particles;
 }
 
-Eigen::VectorXd FastSlam2::samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
+Eigen::VectorXd FastSlam2::samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
   return robot_->samplePose(x, u);
 }
 
-Eigen::VectorXd FastSlam2::sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance)
+Eigen::VectorXd FastSlam2::sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const
 {
   // x ~ N(mean, covariance)
   Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
   return norm.samples(1);
 }
 
-Eigen::VectorXd FastSlam2::predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
+Eigen::VectorXd FastSlam2::predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
 {
   // g(x_{t-1}, u_t)
   return robot_->predictPose(x, u);
 }
 
-Eigen::VectorXd FastSlam2::predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
+Eigen::VectorXd FastSlam2::predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const
 {
   // h(mean_{t-1}, x)
   return robot_->predictMeasurement(map_, mean, x);
 }
 
-Eigen::VectorXd FastSlam2::inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z)
+Eigen::VectorXd FastSlam2::inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z) const
 {
   // mean_t = h^{-1}(x_t, z_t))
   return robot_->inverseMeasurement(map_, x, z);
 }
 
-Eigen::MatrixXd FastSlam2::jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
+Eigen::MatrixXd FastSlam2::jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const
 {
   // mean_t = h^{-1}(x_t, z_t))  
   return robot_->jacobianPose(map_, mean, x);
 }
 
-Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
+Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const
 {
   return robot_->jacobianFeature(map_, mean, x);
 }

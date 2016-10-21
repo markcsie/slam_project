@@ -6,7 +6,7 @@
 class MobileRobot2dModel : public RobotModelInterface
 {
 public:
-  MobileRobot2dModel(MotionModelInterface &motion_model, MeasurementModelInterface &measurement_model);
+  MobileRobot2dModel(const MotionModelInterface &motion_model, const MeasurementModelInterface &measurement_model);
   MobileRobot2dModel(const MobileRobot2dModel& other);
   virtual ~MobileRobot2dModel();
   

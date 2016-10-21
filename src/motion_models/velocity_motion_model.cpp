@@ -21,25 +21,25 @@ VelocityMotionModel::~VelocityMotionModel()
 
 }
 
-Eigen::VectorXd VelocityMotionModel::predictPose(const RobotModelInterface * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd VelocityMotionModel::predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
-    return predictPose(static_cast<const MobileRobot2dModel *> (robot_model), x, u);
+    return predictPose(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), x, u);
   }
   std::cerr << "VelocityMotionModel::predictPose ERROR" << std::endl;
 }
 
-Eigen::VectorXd VelocityMotionModel::samplePose(const RobotModelInterface * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
-    return predictPose(static_cast<const MobileRobot2dModel *> (robot_model), x, u);
+    return predictPose(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), x, u);
   }
   std::cerr << "VelocityMotionModel::samplePose ERROR" << std::endl;
 }
 
-Eigen::VectorXd VelocityMotionModel::predictPose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd VelocityMotionModel::predictPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   // g(x_{t-1}, u_t)
   Eigen::VectorXd x_next(robot_model->getDim());
@@ -48,7 +48,7 @@ Eigen::VectorXd VelocityMotionModel::predictPose(const MobileRobot2dModel * robo
   return x_next;
 }
 
-Eigen::VectorXd VelocityMotionModel::samplePose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
   Eigen::VectorXd x_next(robot_model->getDim());

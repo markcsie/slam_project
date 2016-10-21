@@ -11,12 +11,12 @@ public:
   VelocityMotionModel(const VelocityMotionModel& other);
   virtual ~VelocityMotionModel();
 
-  virtual Eigen::VectorXd samplePose(const RobotModelInterface * robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u);
-  virtual Eigen::VectorXd predictPose(const RobotModelInterface * robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u);
+  virtual Eigen::VectorXd samplePose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
+  virtual Eigen::VectorXd predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
 
 private:
-  virtual Eigen::VectorXd samplePose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
-  virtual Eigen::VectorXd predictPose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  virtual Eigen::VectorXd samplePose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
+  virtual Eigen::VectorXd predictPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
   
   double delta_t_;
   std::vector<double> alphas_; // parameters fo motion noise 

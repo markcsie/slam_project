@@ -20,55 +20,56 @@ FeatureMeasurementModel::~FeatureMeasurementModel()
 
 }
 
-Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const RobotModelInterface *robot_model, const MapModelInterface *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
     if (map_model->getType() == FeatureMap2dModel::TYPE)
     {
-      return predictMeasurement(static_cast<const MobileRobot2dModel *> (robot_model), static_cast<const FeatureMap2dModel *> (map_model), mean, x);
+      return predictMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
   std::cerr << "FastSlam2::predictMeasurement ERROR" << std::endl;
 }
 
-Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const RobotModelInterface *robot_model, const MapModelInterface *map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z)
+Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
     if (map_model->getType() == FeatureMap2dModel::TYPE)
     {
-      return inverseMeasurement(static_cast<const MobileRobot2dModel *> (robot_model), static_cast<const FeatureMap2dModel *> (map_model), x, z);
+      
+      return inverseMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), x, z);
     }
   }
   std::cerr << "FastSlam2::inverseMeasurement ERROR" << std::endl;
 }
 
-Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const RobotModelInterface *robot_model, const MapModelInterface *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
     if (map_model->getType() == FeatureMap2dModel::TYPE)
     {
-      return jacobianPose(static_cast<const MobileRobot2dModel *> (robot_model), static_cast<const FeatureMap2dModel *> (map_model), mean, x);
+      return jacobianPose(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
   std::cerr << "FastSlam2::jacobianPose ERROR" << std::endl;
 }
 
-Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
   {
     if (map_model->getType() == FeatureMap2dModel::TYPE)
     {
-      return jacobianFeature(static_cast<const MobileRobot2dModel *> (robot_model), static_cast<const FeatureMap2dModel *> (map_model), mean, x);
+      return jacobianFeature(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
   std::cerr << "FastSlam2::jacobianFeature ERROR" << std::endl;
 }
 
-Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const MobileRobot2dModel *robot_model, const FeatureMap2dModel *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   // z = h(mean_{t-1}, x)
   Eigen::VectorXd z(dim_);
@@ -76,7 +77,7 @@ Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const MobileRobot2dM
   return z;
 }
 
-Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const MobileRobot2dModel *robot_model, const FeatureMap2dModel *map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z)
+Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
 {
   // mean_t = h^{-1}(x_t, z_t))
   Eigen::VectorXd mean(map_model->getDim());
@@ -84,7 +85,7 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const MobileRobot2dM
   return mean;
 }
 
-Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const MobileRobot2dModel *robot_model, const FeatureMap2dModel *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   Eigen::MatrixXd H_x(dim_, robot_model->getDim());
   double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);
@@ -93,7 +94,7 @@ Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const MobileRobot2dModel *
   return H_x;
 }
 
-Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   Eigen::MatrixXd H_m(dim_, map_model->getDim());
   double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);

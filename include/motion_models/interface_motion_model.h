@@ -10,8 +10,8 @@ class RobotModelInterface;
 class MotionModelInterface
 {
 public:
-  virtual Eigen::VectorXd samplePose(const RobotModelInterface * robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) = 0;
-  virtual Eigen::VectorXd predictPose(const RobotModelInterface * robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) = 0;
+  virtual Eigen::VectorXd samplePose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const = 0;
+  virtual Eigen::VectorXd predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const = 0;
   
   const std::string &getType() const
   {

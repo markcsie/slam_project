@@ -13,10 +13,10 @@ public:
   FeatureMeasurementModel(const FeatureMeasurementModel& other);
   virtual ~FeatureMeasurementModel();
 
-  virtual Eigen::VectorXd predictMeasurement(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
-  virtual Eigen::VectorXd inverseMeasurement(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z);
-  virtual Eigen::MatrixXd jacobianPose(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x);
-  virtual Eigen::MatrixXd jacobianFeature(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
+  virtual Eigen::VectorXd predictMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
+  virtual Eigen::VectorXd inverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z) const;
+  virtual Eigen::MatrixXd jacobianPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const;
+  virtual Eigen::MatrixXd jacobianFeature(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
 
   const Eigen::MatrixXd &getQt() const
   {
@@ -24,10 +24,10 @@ public:
   };
   
 private:
-  virtual Eigen::VectorXd predictMeasurement(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
-  virtual Eigen::VectorXd inverseMeasurement(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z);
-  virtual Eigen::MatrixXd jacobianPose(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x);
-  virtual Eigen::MatrixXd jacobianFeature(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
+  virtual Eigen::VectorXd predictMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
+  virtual Eigen::VectorXd inverseMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z) const;
+  virtual Eigen::MatrixXd jacobianPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const;
+  virtual Eigen::MatrixXd jacobianFeature(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
 
   Eigen::MatrixXd Q_t_;
 

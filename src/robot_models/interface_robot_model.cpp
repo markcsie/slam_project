@@ -7,14 +7,6 @@ RobotModelInterface::RobotModelInterface()
 
 RobotModelInterface::~RobotModelInterface()
 {
-  if (motion_model_ != nullptr) {
-    delete motion_model_;
-    motion_model_ = nullptr;
-  }
-  if (measurement_model_ != nullptr) {
-    delete measurement_model_;
-    measurement_model_ = nullptr;
-  }
 }
 
 const Eigen::MatrixXd &RobotModelInterface::getQt() const
@@ -22,32 +14,32 @@ const Eigen::MatrixXd &RobotModelInterface::getQt() const
   return measurement_model_->getQt();
 };
 
-Eigen::VectorXd RobotModelInterface::predictPose(const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd RobotModelInterface::predictPose(const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
-  return motion_model_->predictPose(this, x, u);
+  return motion_model_->predictPose(std::shared_ptr<const RobotModelInterface>(this), x, u);
 }
 
-Eigen::VectorXd RobotModelInterface::samplePose(const Eigen::VectorXd& x, const Eigen::VectorXd& u)
+Eigen::VectorXd RobotModelInterface::samplePose(const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
-  return motion_model_->samplePose(this, x, u);
+  return motion_model_->samplePose(std::shared_ptr<const RobotModelInterface>(this), x, u);
 }
 
-Eigen::VectorXd RobotModelInterface::predictMeasurement(const MapModelInterface *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::VectorXd RobotModelInterface::predictMeasurement(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
-  return measurement_model_->predictMeasurement(this, map_model, mean, x);
+  return measurement_model_->predictMeasurement(std::shared_ptr<const RobotModelInterface>(this), map_model, mean, x);
 }
 
-Eigen::VectorXd RobotModelInterface::inverseMeasurement(const MapModelInterface *map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z)
+Eigen::VectorXd RobotModelInterface::inverseMeasurement(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
 {
-  return measurement_model_->inverseMeasurement(this, map_model, x, z);
+  return measurement_model_->inverseMeasurement(std::shared_ptr<const RobotModelInterface>(this), map_model, x, z);
 }
 
-Eigen::MatrixXd RobotModelInterface::jacobianPose(const MapModelInterface *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd RobotModelInterface::jacobianPose(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
-  return measurement_model_->jacobianPose(this, map_model, mean, x);
+  return measurement_model_->jacobianPose(std::shared_ptr<const RobotModelInterface>(this), map_model, mean, x);
 }
 
-Eigen::MatrixXd RobotModelInterface::jacobianFeature(const MapModelInterface *map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x)
+Eigen::MatrixXd RobotModelInterface::jacobianFeature(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
-  return measurement_model_->jacobianFeature(this, map_model, mean, x);
+  return measurement_model_->jacobianFeature(std::shared_ptr<const RobotModelInterface>(this), map_model, mean, x);
 }

@@ -1,9 +1,8 @@
 #ifndef FAST_SLAM2_H
 #define FAST_SLAM2_H
 
-#include <vector>
 #include <unordered_map>
-#include <random>
+#include <memory>
 
 #include <Eigen/Dense>
 
@@ -26,14 +25,14 @@ struct Particle
 class FastSlam2
 {
 public:
-  FastSlam2(const size_t &num_particles, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
+  FastSlam2(const size_t &num_particles, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 
   void process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
 private:
-  RobotModelInterface *robot_;
-  MapModelInterface *map_;
+  std::shared_ptr<const RobotModelInterface> robot_;
+  std::shared_ptr<const MapModelInterface> map_;
 
   std::default_random_engine generator;
   double initial_w_;
@@ -41,14 +40,14 @@ private:
 
   void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
 
-  Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance);
+  Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 
-  Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
-  Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
-  Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
-  Eigen::VectorXd inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z);
-  Eigen::MatrixXd jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
-  Eigen::MatrixXd jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
+  Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
+  Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
+  Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)const;
+  Eigen::VectorXd inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z) const;
+  Eigen::MatrixXd jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
+  Eigen::MatrixXd jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
 };
 
 #endif /* FAST_SLAM2_H */
