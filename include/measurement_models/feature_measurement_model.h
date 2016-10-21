@@ -9,7 +9,7 @@
 class FeatureMeasurementModel : public MeasurementModelInterface
 {
 public:
-  FeatureMeasurementModel();
+  FeatureMeasurementModel(const Eigen::MatrixXd &Q_t);
   FeatureMeasurementModel(const FeatureMeasurementModel& other);
   virtual ~FeatureMeasurementModel();
 
@@ -17,12 +17,20 @@ public:
   virtual Eigen::VectorXd inverseMeasurement(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z);
   virtual Eigen::MatrixXd jacobianPose(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x);
   virtual Eigen::MatrixXd jacobianFeature(const RobotModelInterface * robot_model, const MapModelInterface * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
+
+  const Eigen::MatrixXd &getQt() const
+  {
+    return Q_t_;
+  };
   
 private:
   virtual Eigen::VectorXd predictMeasurement(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
   virtual Eigen::VectorXd inverseMeasurement(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &x, const Eigen::VectorXd &z);
   virtual Eigen::MatrixXd jacobianPose(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x);
   virtual Eigen::MatrixXd jacobianFeature(const MobileRobot2dModel * robot_model, const FeatureMap2dModel * map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
+
+  Eigen::MatrixXd Q_t_;
+
 };
 
 #endif /* FEATURE_MEASUREMENT_MODEL_H */

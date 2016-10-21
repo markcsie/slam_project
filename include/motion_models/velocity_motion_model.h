@@ -7,7 +7,7 @@
 class VelocityMotionModel : public MotionModelInterface
 {
 public:
-  VelocityMotionModel();
+  VelocityMotionModel(const std::vector<double> &alphas, const double &delta_t);
   VelocityMotionModel(const VelocityMotionModel& other);
   virtual ~VelocityMotionModel();
 
@@ -17,6 +17,9 @@ public:
 private:
   virtual Eigen::VectorXd samplePose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
   virtual Eigen::VectorXd predictPose(const MobileRobot2dModel * robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  
+  double delta_t_;
+  std::vector<double> alphas_; // parameters fo motion noise 
 };
 
 #endif /* VELOCITY_MOTION_MODEL_H */

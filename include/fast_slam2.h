@@ -34,15 +34,16 @@ public:
 private:
   RobotModelInterface *robot_;
   MapModelInterface *map_;
-  
+
   std::default_random_engine generator;
   double initial_w_;
   std::vector<Particle> particles_;
 
   void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
-  
+
+  Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance);
+
   Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
-  Eigen::VectorXd samplePoseGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance);
   Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
   Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
   Eigen::VectorXd inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z);

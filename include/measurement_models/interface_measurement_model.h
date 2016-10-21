@@ -27,9 +27,15 @@ public:
     return dim_;
   };
   
+  virtual const Eigen::MatrixXd &getQt() const
+  {
+    return Q_t_;
+  };
+  
 protected:
   std::string type_;
   size_t dim_;
+  Eigen::MatrixXd Q_t_; // measurement noise
 };
 
 #endif /* INTERFACE_MEASUREMENT_MODEL_H */

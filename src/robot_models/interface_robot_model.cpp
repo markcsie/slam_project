@@ -17,6 +17,11 @@ RobotModelInterface::~RobotModelInterface()
   }
 }
 
+const Eigen::MatrixXd &RobotModelInterface::getQt() const
+{
+  return measurement_model_->getQt();
+};
+
 Eigen::VectorXd RobotModelInterface::predictPose(const Eigen::VectorXd& x, const Eigen::VectorXd& u)
 {
   return motion_model_->predictPose(this, x, u);

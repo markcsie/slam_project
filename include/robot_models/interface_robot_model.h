@@ -36,6 +36,8 @@ public:
   {
     return init_x_;
   };
+    
+  const Eigen::MatrixXd &getQt() const;
 
 protected:
   RobotModelInterface(); // abstract base class

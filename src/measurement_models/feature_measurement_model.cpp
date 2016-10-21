@@ -2,10 +2,12 @@
 
 #include <iostream>
 
-FeatureMeasurementModel::FeatureMeasurementModel()
+FeatureMeasurementModel::FeatureMeasurementModel(const Eigen::MatrixXd &Q_t) : Q_t_(Q_t)
 {
   type_ = "Feature Measurement Model";
   dim_ = 2;
+//  Q_t_ = Q_t;
+  assert(Q_t_.rows() == 2 && Q_t_.cols() == 2);
 }
 
 FeatureMeasurementModel::FeatureMeasurementModel(const FeatureMeasurementModel& other)
@@ -77,7 +79,8 @@ Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const MobileRobot2dM
 Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const MobileRobot2dModel *robot_model, const FeatureMap2dModel *map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z)
 {
   // mean_t = h^{-1}(x_t, z_t))
-  Eigen::VectorXd mean;
+  Eigen::VectorXd mean(map_model->getDim());
+  mean << x[0] + z[0] * std::cos(z[1] + x[2]), x[1] + z[0] * std::cos(z[1] + x[2]);
   return mean;
 }
 

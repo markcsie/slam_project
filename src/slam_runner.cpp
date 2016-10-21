@@ -63,8 +63,13 @@ int main(int argc, char **argv)
   ROS_ASSERT(initial_w > 0);
 
   FeatureMap2dModel map;
-  FeatureMeasurementModel feature_model;
-  VelocityMotionModel velocity_model;
+  Eigen::MatrixXd Q_t(2, 2); // TODO:
+  Q_t << 1.0, 1.0,
+         1.0, 1.0;
+  FeatureMeasurementModel feature_model(Q_t);
+  std::vector<double> alphas = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; // TODO:
+  double delta_t = 1.0; // TODO: from data_reader
+  VelocityMotionModel velocity_model(alphas, delta_t);
   MobileRobot2dModel robot(velocity_model, feature_model);
   
   SlamRunner slam_runner(num_particles, initial_w, robot, map); // TODO: dimension depends on the incoming data
