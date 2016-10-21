@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include "../include/data_reader.h"
 #include "slam_project/Robot_GroundTruth.h"
 #include "slam_project/Robot_Odometry.h"
@@ -13,8 +14,10 @@ vector<landmark> landmark_groundtruth;
 void readData(){
   //read data
   //vector<measure> robot_measurment;
-  ifstream file1("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Measurement.txt");
-  ifstream file1_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Measurement.txt");
+  string path = ros::package::getPath("slam_project");
+  cout<<path<<endl;
+  ifstream file1(path+"/data/newRobot1_Measurement.txt");
+  ifstream file1_2(path+ "/data/newRobot1_Measurement.txt");
   int line_count1 = 0;
   string line1;
   double m_time, m_range, m_bearing;
@@ -36,8 +39,8 @@ void readData(){
 
   //odometry
   //vector<odometry> robot_odometry;
-  ifstream file2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Odometry.txt");
-  ifstream file2_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Odometry.txt");
+  ifstream file2(path+"/data/newRobot1_Odometry.txt");
+  ifstream file2_2(path+"/data/newRobot1_Odometry.txt");
   int line_count2 = 0;
   string line2;
   double o_time, o_forward_velocity, o_angular_velocity;
@@ -57,8 +60,8 @@ void readData(){
 
   //groundtruth
   //vector<groundtruth> robot_groundtruth;
-  ifstream file3("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Groundtruth.txt");
-  ifstream file3_2("/home/bricy/catkin_ws/src/slam_project/data/newRobot1_Groundtruth.txt");
+  ifstream file3(path+"/data/newRobot1_Groundtruth.txt");
+  ifstream file3_2(path+"/data/newRobot1_Groundtruth.txt");
   int line_count3 = 0;
   string line3;
   double g_time, g_x, g_y, g_orientation;
@@ -79,8 +82,8 @@ void readData(){
 
   //barcode
   //vector<int> subject;
-  ifstream file4("/home/bricy/catkin_ws/src/slam_project/data/Barcodes.dat");
-  ifstream file4_2("/home/bricy/catkin_ws/src/slam_project/data/Barcodes.dat");
+  ifstream file4(path+"/data/Barcodes.dat");
+  ifstream file4_2(path+"/data/Barcodes.dat");
   subject.push_back(0);
   int line_count4 = 0;
   string line4;
@@ -96,8 +99,8 @@ void readData(){
 
   //Landmark_Groundtruth
   //vector<landmark> landmark_groundtruth;
-  ifstream file5("/home/bricy/catkin_ws/src/slam_project/data/Landmark_Groundtruth.dat");
-  ifstream file5_2("/home/bricy/catkin_ws/src/slam_project/data/Landmark_Groundtruth.dat");
+  ifstream file5(path+"/data/Landmark_Groundtruth.dat");
+  ifstream file5_2(path+"/data/Landmark_Groundtruth.dat");
   string line5;
   int line5_count;
   double l_x, l_y, l_xstd_dev, l_ystd_dev;

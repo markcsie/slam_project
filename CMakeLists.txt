@@ -6,6 +6,7 @@ find_package(catkin REQUIRED
   roscpp 
   std_msgs 
   message_generation
+  roslib
 )
 
 find_package(Eigen3 REQUIRED)
@@ -26,7 +27,7 @@ generate_messages(
 
 ## Declare a catkin package
 catkin_package(
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime roslib
 )
 
 # re-define complier and linker flags. o/w an error due to "gcov" (GCC test coverage program) would happen
