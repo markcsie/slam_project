@@ -13,6 +13,8 @@ class MeasurementModelInterface;
 class RobotModelInterface
 {
 public:
+  virtual ~RobotModelInterface();
+  
   virtual Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
   virtual Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
   virtual Eigen::VectorXd predictMeasurement(const MapModelInterface *map_2d_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x);
@@ -37,7 +39,7 @@ public:
 
 protected:
   RobotModelInterface(); // abstract base class
-  virtual ~RobotModelInterface();
+
   
   std::string type_;
   size_t dim_;
