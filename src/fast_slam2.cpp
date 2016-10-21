@@ -4,8 +4,8 @@
 
 #include "utils/eigenmvn.h"
 
-FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, const size_t &x_dim, const size_t &u_dim, const size_t &z_dim, const size_t &m_dim) :
-particles_(num_particles), initial_w_(initial_w), x_dim_(x_dim), u_dim_(u_dim), z_dim_(z_dim), m_dim_(m_dim)
+FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map) :
+particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
 {
 
 }
@@ -17,11 +17,21 @@ FastSlam2::FastSlam2(const FastSlam2& other)
 
 FastSlam2::~FastSlam2()
 {
+  if (robot_ != nullptr)
+  {
+    delete robot_;
+    robot_ = nullptr;
+  }
+  if (map_ != nullptr)
+  {
+    delete map_;
+    map_ = nullptr;
+  }
 }
 
 void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
 {
-  // Testing
+  // TODO: This is just testing
   Eigen::VectorXd mean(2);
   mean << 100, 1;
   Eigen::MatrixXd cov(2, 2);
@@ -53,8 +63,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
 Eigen::VectorXd FastSlam2::samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
-  Eigen::VectorXd x_next;
-  return x_next;
+  return robot_->samplePose(x, u);
 }
 
 Eigen::VectorXd FastSlam2::samplePoseGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance)
@@ -67,38 +76,30 @@ Eigen::VectorXd FastSlam2::samplePoseGaussian(const Eigen::VectorXd &mean, const
 Eigen::VectorXd FastSlam2::predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
 {
   // g(x_{t-1}, u_t)
-  Eigen::VectorXd x_next;
-  return x_next;
+  return robot_->predictPose(x, u);
 }
 
 Eigen::VectorXd FastSlam2::predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
 {
   // h(mean_{t-1}, x)
-  Eigen::VectorXd z;
-  return z;
+  return robot_->predictMeasurement(map_, mean, x);
 }
 
 Eigen::VectorXd FastSlam2::inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z)
 {
   // mean_t = h^{-1}(x_t, z_t))
-  Eigen::VectorXd mean;
-  return mean;
+  return robot_->inverseMeasurement(map_, x, z);
 }
 
 Eigen::MatrixXd FastSlam2::jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
 {
-  Eigen::MatrixXd H_x(z_dim_, x_dim_);
-  double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);
-  H_x << -(mean[0] - x[0]) / std::sqrt(q), -(mean[1] - x[1]) / std::sqrt(q), 0,
-          (mean[1] - x[1]) / q, -(mean[0] - x[0]) / q, -1;
-  return H_x;
+  // mean_t = h^{-1}(x_t, z_t))  
+  return robot_->jacobianPose(map_, mean, x);
 }
 
 Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)
 {
-  Eigen::MatrixXd H_m(z_dim_, m_dim_);
-
-  return H_m;
+  return robot_->jacobianFeature(map_, mean, x);
 }
 
 void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
@@ -121,8 +122,7 @@ void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eige
       Eigen::MatrixXd H_m = jacobianFeature(p.features_[feature_id].mean_, p.x_);
       p.features_[feature_id].covariance_ = H_m.inverse().transpose() * Q_t * H_m.inverse();
       p.w_ = initial_w_;
-    }
-    else
+    } else
     {
       Eigen::VectorXd x_t = predictPose(p.x_, u);
       Eigen::MatrixXd H_m = jacobianFeature(p.features_[feature_id].mean_, x_t);

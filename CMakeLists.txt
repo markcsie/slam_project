@@ -39,7 +39,7 @@ SET(GCC_COVERAGE_LINK_FLAGS
 )
 
 SET(CMAKE_CXX_FLAGS  
-  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -std=c++11" 
+  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -std=c++14" 
 )
 
 SET(CMAKE_EXE_LINKER_FLAGS
@@ -75,6 +75,11 @@ target_link_libraries(data_reader_node
 add_executable(slam_runner_node 
   src/slam_runner.cpp
   src/fast_slam2.cpp
+  src/motion_models/velocity_motion_model.cpp
+  src/measurement_models/feature_measurement_model.cpp
+  src/robot_models/interface_robot_model.cpp
+  src/robot_models/mobile_robot_2dmodel.cpp
+  src/map_models/feature_map_2dmodel.cpp
 )
 
 target_link_libraries(slam_runner_node
