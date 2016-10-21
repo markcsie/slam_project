@@ -11,10 +11,12 @@ public:
   VelocityMotionModel(const VelocityMotionModel& other);
   virtual ~VelocityMotionModel();
 
+  virtual Eigen::MatrixXd calculateRt(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
   virtual Eigen::VectorXd samplePose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
-
+    
 private:
+  virtual Eigen::MatrixXd calculateRt(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
   virtual Eigen::VectorXd samplePose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
   virtual Eigen::VectorXd predictPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const;
   

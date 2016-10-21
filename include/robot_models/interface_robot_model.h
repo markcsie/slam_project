@@ -16,6 +16,7 @@ class RobotModelInterface
 public:
   virtual ~RobotModelInterface();
   
+  virtual Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd predictMeasurement(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
@@ -39,7 +40,7 @@ public:
   };
     
   const Eigen::MatrixXd &getQt() const;
-
+  
 protected:
   RobotModelInterface(); // abstract base class
 

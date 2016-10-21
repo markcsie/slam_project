@@ -14,6 +14,11 @@ const Eigen::MatrixXd &RobotModelInterface::getQt() const
   return measurement_model_->getQt();
 };
 
+Eigen::MatrixXd RobotModelInterface::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
+{
+  return motion_model_->calculateRt(std::shared_ptr<const RobotModelInterface>(this), x, u);
+};
+
 Eigen::VectorXd RobotModelInterface::predictPose(const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   return motion_model_->predictPose(std::shared_ptr<const RobotModelInterface>(this), x, u);

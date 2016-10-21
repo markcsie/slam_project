@@ -10,6 +10,7 @@ class RobotModelInterface;
 class MotionModelInterface
 {
 public:
+  virtual Eigen::MatrixXd calculateRt(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const = 0;
   virtual Eigen::VectorXd samplePose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const = 0;
   virtual Eigen::VectorXd predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd &x, const Eigen::VectorXd &u) const = 0;
   
@@ -22,7 +23,7 @@ public:
   {
     return dim_;
   };
-
+  
 protected:
   std::string type_;
   size_t dim_;

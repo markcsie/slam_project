@@ -42,6 +42,7 @@ private:
 
   Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 
+  Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)const;

@@ -50,6 +50,12 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   particles_ = new_particles;
 }
 
+Eigen::MatrixXd FastSlam2::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
+{
+  // R_t = V_t M_t V_t^{T}
+  return robot_->calculateRt(x, u);
+}
+
 Eigen::VectorXd FastSlam2::samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
@@ -103,7 +109,7 @@ void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eige
   {
     const int feature_id = z(m, 0);
     auto iter = p.features_.find(feature_id);
-    Eigen::MatrixXd R_t; // TODO: R_t parameters
+    Eigen::MatrixXd R_t = calculateRt(p.x_, u);
     if (iter == p.features_.end()) // first time seeing the feature, do initialization 
     {
       p.x_ = samplePose(p.x_, u);

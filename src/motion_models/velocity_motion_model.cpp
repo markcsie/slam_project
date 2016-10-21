@@ -21,6 +21,15 @@ VelocityMotionModel::~VelocityMotionModel()
 
 }
 
+Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
+{
+  if (robot_model->getType() == MobileRobot2dModel::TYPE)
+  {
+    return calculateRt(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), x, u);
+  }
+  std::cerr << "VelocityMotionModel::calculateRt ERROR" << std::endl;
+};
+
 Eigen::VectorXd VelocityMotionModel::predictPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
@@ -38,6 +47,22 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Robo
   }
   std::cerr << "VelocityMotionModel::samplePose ERROR" << std::endl;
 }
+
+Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
+{
+  Eigen::MatrixXd V_t(robot_model->getDim(), dim_);
+  V_t(0, 0) = (-std::sin(x[2]) + std::sin(x[2] + u[1] * delta_t_)) / u[1];
+  V_t(0, 1) = u[0] * ((std::sin(x[2]) - std::sin(x[2] + u[1] * delta_t_)) / std::pow(u[1], 2) + (std::cos(x[2] + u[1] * delta_t_) * delta_t_) / u[1]);
+  V_t(1, 0) = (std::cos(x[2]) - std::cos(x[2] + u[1] * delta_t_)) / u[1];
+  V_t(1, 1) = -u[0] * ((std::cos(x[2]) - std::cos(x[2] + u[1] * delta_t_)) / std::pow(u[1], 2) - (std::sin(x[2] + u[1] * delta_t_) * delta_t_) / u[1]);
+  V_t(2, 0) = 0;
+  V_t(2, 2) = delta_t_;
+  
+  Eigen::MatrixXd M_t(dim_, dim_);
+  M_t << alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2), 0,
+         0, alphas_[2] * std::pow(u[0], 2) + alphas_[3] * std::pow(u[1], 2);
+  return V_t * M_t * V_t.transpose();
+};
 
 Eigen::VectorXd VelocityMotionModel::predictPose(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
