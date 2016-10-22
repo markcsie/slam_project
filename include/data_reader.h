@@ -1,6 +1,9 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+
+#include "slam_project/Robot_GroundTruth.h"
+#include "slam_project/Robot_Odometry.h"
 using namespace std;
 
 //Time [s]    Subject #    range [m]    bearing [rad] 
@@ -38,3 +41,5 @@ struct landmark{
 	double xstd_dev;
 	double ystd_dev;
 };
+
+void readData();

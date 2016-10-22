@@ -1,15 +1,13 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include "../include/data_reader.h"
-#include "slam_project/Robot_GroundTruth.h"
-#include "slam_project/Robot_Odometry.h"
-vector<measure> robot_measurment;
+vector<measure> robot_measurement;
 vector<odometry> robot_odometry;
 vector<groundtruth> robot_groundtruth;
 vector<int> subject;
 vector<landmark> landmark_groundtruth;
 
-
+int k=0; 
 //robot_measurement robot_odometry robot_groundtruth subject landmark_groundtruth
 void readData(){
   //read data
@@ -32,7 +30,7 @@ void readData(){
     m_cur.subject = m_subject;
     m_cur.range = m_range;
     m_cur.bearing = m_bearing;
-    robot_measurment.push_back(m_cur);
+    robot_measurement.push_back(m_cur);
   }
   file1.close();
   file1_2.close();
@@ -123,20 +121,9 @@ void readData(){
 
 }
 
-int main(int argc, char **argv) {
-  readData();
-  ros::init(argc, argv, "data_reader");
-  ros::NodeHandle node;
 
-  ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 1000);
-  ros::Publisher dataPublisher3 = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg3", 1000);
-  
-
-  ros::Rate rate(50);
-  ROS_INFO("start spinning");
-  int i=0,j=0;
-  while (ros::ok()) {
-    if (i<robot_groundtruth.size()){
+slam_project::Robot_Odometry sendMsg(int j){
+/*    if (i<robot_groundtruth.size()){
       slam_project::Robot_GroundTruth msg;
       msg.time = robot_groundtruth[i].time;
       msg.x = robot_groundtruth[i].x;
@@ -145,17 +132,50 @@ int main(int argc, char **argv) {
       i++;  
       std::cout<<"time: "<<msg.time<<" "<<msg.x<<" "<<msg.y<<" "<<msg.orientation<<endl;
       dataPublisher3.publish(msg);
-    }
-
+    }*/
+    slam_project::Robot_Odometry msg_odometry;
     if (j<robot_odometry.size()){
-      slam_project::Robot_Odometry msg_odometry;
+  
       msg_odometry.time = robot_odometry[j].time;
       msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
       msg_odometry.angular_veolocity = robot_odometry[j].angular_veolocity;
-      j++;
-      cout<<"time: "<<msg_odometry.time<<" "<<msg_odometry.forward_velocity<<endl;
-      dataPublisher2.publish(msg_odometry);
+
+      if (robot_measurement[k].time == msg_odometry.time){
+        if (robot_measurement[k].subject != subject[2] && 
+           robot_measurement[k].subject != subject[3] &&
+           robot_measurement[k].subject != subject[4] &&
+           robot_measurement[k].subject != subject[5]){
+            msg_odometry.flag = 1;
+            msg_odometry.subject = robot_measurement[k].subject;
+            msg_odometry.range = robot_measurement[k].range;
+            msg_odometry.bearing = robot_measurement[k].bearing;
+            k++;
+        } 
+      }else{
+        msg_odometry.flag = 0;
+      }
+
+      cout<<"time: "<<msg_odometry.time<<" "<<
+          "flag: "<<msg_odometry.flag<<" "<<msg_odometry.bearing<<endl;
+      /*dataPublisher2.publish(msg_odometry);*/
     }
+    return msg_odometry;
+}
+
+int main(int argc, char **argv) {
+  readData();
+  ros::init(argc, argv, "data_reader");
+  ros::NodeHandle node;
+
+  ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 1000);
+  
+
+  ros::Rate rate(50);
+  ROS_INFO("start spinning");
+  int j=0;
+  while (ros::ok()) {
+    dataPublisher2.publish(sendMsg(j));
+    j++;
     ros::spinOnce(); // check for incoming messages
     rate.sleep();
   }
