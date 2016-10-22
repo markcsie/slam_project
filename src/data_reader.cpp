@@ -121,18 +121,22 @@ void readData(){
 
 }
 
-
-slam_project::Robot_Odometry sendMsg(int j){
-/*    if (i<robot_groundtruth.size()){
-      slam_project::Robot_GroundTruth msg;
+slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i){
+    slam_project::Robot_GroundTruth msg;
+ 
+    if (i<robot_groundtruth.size()){
       msg.time = robot_groundtruth[i].time;
       msg.x = robot_groundtruth[i].x;
       msg.y = robot_groundtruth[i].y;
       msg.orientation = robot_groundtruth[i].orientation;
       i++;  
       std::cout<<"time: "<<msg.time<<" "<<msg.x<<" "<<msg.y<<" "<<msg.orientation<<endl;
-      dataPublisher3.publish(msg);
-    }*/
+    }
+    return msg;
+}
+
+slam_project::Robot_Odometry sendMsg_Odometry(int j){
+
     slam_project::Robot_Odometry msg_odometry;
     if (j<robot_odometry.size()){
   
@@ -140,6 +144,8 @@ slam_project::Robot_Odometry sendMsg(int j){
       msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
       msg_odometry.angular_veolocity = robot_odometry[j].angular_veolocity;
 
+
+      //only robot1's data is transmitted.
       if (robot_measurement[k].time == msg_odometry.time){
         if (robot_measurement[k].subject != subject[2] && 
            robot_measurement[k].subject != subject[3] &&
@@ -162,19 +168,39 @@ slam_project::Robot_Odometry sendMsg(int j){
     return msg_odometry;
 }
 
+bool add(slam_project::requestBarcode::Request &req,
+         slam_project::requestBarcode::Response &res){
+  if (req.a!=1) return false;
+  int len=subject.size()-1;
+  res.barcode.resize(len+1);
+  res.barcode[0] = len;
+  for (int i=1; i<=len; i++){
+    res.barcode[i] = subject[i];
+    ROS_INFO("sending back response: %d", (int)res.barcode[i]);  
+  }
+  ROS_INFO("request barcode data");
+  return true;
+}
+
 int main(int argc, char **argv) {
   readData();
   ros::init(argc, argv, "data_reader");
   ros::NodeHandle node;
 
   ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 1000);
-  
+  ros::Publisher dataPublisher3 = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg3", 1000);
+  ros::ServiceServer service = node.advertiseService("requestData", add);
+  ROS_INFO("Ready to send barcode data.");
+//  ros::spin();
+
 
   ros::Rate rate(50);
   ROS_INFO("start spinning");
-  int j=0;
+  int i=0,j=0;
   while (ros::ok()) {
-    dataPublisher2.publish(sendMsg(j));
+    dataPublisher3.publish(sendMsg_GroundTruth(i));
+    dataPublisher2.publish(sendMsg_Odometry(j));
+    i++;
     j++;
     ros::spinOnce(); // check for incoming messages
     rate.sleep();

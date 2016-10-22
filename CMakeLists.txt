@@ -17,7 +17,10 @@ add_message_files(
   Robot_GroundTruth.msg
   Robot_Odometry.msg
 )
-#add_service_files(FILES)
+add_service_files(
+  FILES
+  requestBarcode.srv
+)
 
 ## Generate added messages and services
 generate_messages(
