@@ -63,8 +63,6 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
   fast_slam2_.process(u, z);
 }
 
-
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "slam_runner");
@@ -74,23 +72,29 @@ int main(int argc, char **argv)
   ROS_INFO("start spinning");
 
   int num_particles;
-  node.param<int>("num_particles", num_particles, 100);
+  node.param<int>("slam/num_particles", num_particles, 100);
   std::cout << "num_particles " << num_particles << std::endl;
   ROS_ASSERT(num_particles > 0);
 
   double initial_w;
-  node.param<double>("initial_w", initial_w, 1.0);
+  node.param<double>("slam/initial_w", initial_w, 1.0);
   std::cout << "initial_w " << initial_w << std::endl;
   ROS_ASSERT(initial_w > 0);
 
   FeatureMap2dModel map;
-  Eigen::MatrixXd Q_t(2, 2); // TODO:
-  Q_t << 1.0, 1.0,
-         1.0, 1.0;
+  
+  std::vector<double> measurement_noise;
+  node.param("slam/measurement_noise", measurement_noise, {1.0, 1.0});
+  Eigen::MatrixXd Q_t(2, 2);
+  Q_t << measurement_noise[0], 0.0,
+         0.0, measurement_noise[1];
   FeatureMeasurementModel feature_model(Q_t);
-  std::vector<double> alphas = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; // TODO:
+  
+  std::vector<double> motion_noise;
+  node.param("slam/motion_noise", motion_noise, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
   double delta_t = 0.02; // TODO: from data_reader
-  VelocityMotionModel velocity_model(alphas, delta_t);
+  VelocityMotionModel velocity_model(motion_noise, delta_t);
+
   MobileRobot2dModel robot(velocity_model, feature_model);
   
   SlamRunner slam_runner(num_particles, initial_w, robot, map); // TODO: dimension depends on the incoming data

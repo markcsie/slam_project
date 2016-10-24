@@ -31,19 +31,19 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   // std::cout << sampleMultivariateGaussian(mean, cov) << std::endl;
 
   // implement the algorithm in Table 13.3
+  std::cout << u[0] << " " << u[1] << std::endl;
+  for (int i = 0; i < z.rows(); i++)
+  {
+    std::cout << z(i, 0) << " " << z(i, 1) << " " << z(i, 2) << std::endl;
+  }
+  std::cout << "abababababa" << std::endl;
 
-  std::cout<<u[0]<<" "<<u[1]<<std::endl;
-  for (int i=0; i<z.rows(); i++){
-    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
-  }  
-  std::cout<<"abababababa"<<std::endl;
-  
   for (size_t k = 0; k < particles_.size(); k++)
   {
     updateParticle(particles_[k], u, z);
   }
 
-  std::cout<<"bbbb"<<std::endl;
+  std::cout << "bbbb" << std::endl;
   // resampling
   std::vector<double> weights(particles_.size());
   for (size_t i = 0; i < weights.size(); i++)
@@ -59,7 +59,6 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   particles_ = new_particles;
 
   std::cout<<"cccccc"<<std::endl;
-  
 }
 
 Eigen::MatrixXd FastSlam2::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
