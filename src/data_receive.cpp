@@ -9,7 +9,11 @@ void publishMsg_callback3(const slam_project::Robot_GroundTruth& subMsg){
 }
 
 void publishMsg_callback2(const slam_project::Robot_Odometry& subMsg){
-	cout<<"time: "<<subMsg.time<<" "<<subMsg.forward_velocity<<endl;
+//	cout<<"time: "<<subMsg.time<<" "<<subMsg.forward_velocity<<endl;
+	int len = subMsg.num;
+	if (len>1)
+	    for (int i=0; i<len; i++)
+	    	cout<<"subject: "<<i<<" range: "<<subMsg.range[i]<<endl;
 }
 
 
@@ -25,7 +29,7 @@ int main(int argc, char **argv){
  	ros::ServiceClient client = node.serviceClient<slam_project::requestBarcode>("requestData");
 	slam_project::requestBarcode srv;
 	srv.request.a = 1;
-	
+
 	if (client.call(srv))
 	{
 	    int len = srv.response.barcode[0];

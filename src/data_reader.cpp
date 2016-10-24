@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include "../include/data_reader.h"
+
 vector<measure> robot_measurement;
 vector<odometry> robot_odometry;
 vector<groundtruth> robot_groundtruth;
@@ -142,11 +143,48 @@ slam_project::Robot_Odometry sendMsg_Odometry(int j){
   
       msg_odometry.time = robot_odometry[j].time;
       msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
-      msg_odometry.angular_veolocity = robot_odometry[j].angular_veolocity;
+      msg_odometry.angular_velocity = robot_odometry[j].angular_veolocity;
 
-
+      int count = 0;
+      vector<int> msg_subject;
+      vector<double> msg_range;
+      vector<double> msg_bearing;
       //only robot1's data is transmitted.
       if (robot_measurement[k].time == msg_odometry.time){
+      
+        while(robot_measurement[k].time == msg_odometry.time){
+          if (robot_measurement[k].subject != subject[2] && 
+             robot_measurement[k].subject != subject[3] &&
+             robot_measurement[k].subject != subject[4] &&
+             robot_measurement[k].subject != subject[5]){
+              
+            msg_subject.push_back(robot_measurement[k].subject);
+            msg_range.push_back(robot_measurement[k].range);
+            msg_bearing.push_back(robot_measurement[k].bearing);
+/*              msg_odometry.subject = robot_measurement[k].subject;
+              msg_odometry.range = robot_measurement[k].range;
+              msg_odometry.bearing = robot_measurement[k].bearing;*/
+            k++;
+            count++;
+          }
+        }  
+
+      }
+
+      if (count){
+        msg_odometry.subject.resize(count);
+        msg_odometry.range.resize(count);
+        msg_odometry.bearing.resize(count);
+        for (int i=0; i<count; i++){
+          msg_odometry.subject[i] = msg_subject[i];
+          msg_odometry.range[i] = msg_range[i];
+          msg_odometry.bearing[i] = msg_bearing[i];
+        }
+
+      }
+      msg_odometry.num = count;
+
+     /* if (robot_measurement[k].time == msg_odometry.time){
         if (robot_measurement[k].subject != subject[2] && 
            robot_measurement[k].subject != subject[3] &&
            robot_measurement[k].subject != subject[4] &&
@@ -159,10 +197,10 @@ slam_project::Robot_Odometry sendMsg_Odometry(int j){
         } 
       }else{
         msg_odometry.flag = 0;
-      }
+      }*/
 
       cout<<"time: "<<msg_odometry.time<<" "<<
-          "flag: "<<msg_odometry.flag<<" "<<msg_odometry.bearing<<endl;
+          "num: "<<msg_odometry.num<<endl;
       /*dataPublisher2.publish(msg_odometry);*/
     }
     return msg_odometry;
@@ -184,7 +222,7 @@ bool add(slam_project::requestBarcode::Request &req,
 
 int main(int argc, char **argv) {
   readData();
-  ros::init(argc, argv, "data_reader");
+  ros::init(argc, argv, "data_reader");  //node name "data_reader"
   ros::NodeHandle node;
 
   ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 1000);
