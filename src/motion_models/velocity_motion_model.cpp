@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "utils/gaussian.h"
+#include "utils/random_utils.h"
 
 VelocityMotionModel::VelocityMotionModel(const std::vector<double> &alphas, const double &delta_t) : alphas_(alphas), delta_t_(delta_t)
 {
@@ -18,7 +18,6 @@ VelocityMotionModel::VelocityMotionModel(const VelocityMotionModel& other)
 
 VelocityMotionModel::~VelocityMotionModel()
 {
-
 }
 
 Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const RobotModelInterface> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
@@ -56,7 +55,7 @@ Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const Mob
   V_t(1, 0) = (std::cos(x[2]) - std::cos(x[2] + u[1] * delta_t_)) / u[1];
   V_t(1, 1) = -u[0] * ((std::cos(x[2]) - std::cos(x[2] + u[1] * delta_t_)) / std::pow(u[1], 2) - (std::sin(x[2] + u[1] * delta_t_) * delta_t_) / u[1]);
   V_t(2, 0) = 0;
-  V_t(2, 2) = delta_t_;
+  V_t(2, 1) = delta_t_;
   
   Eigen::MatrixXd M_t(dim_, dim_);
   M_t << alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2), 0,

@@ -17,5 +17,4 @@ MobileRobot2dModel::MobileRobot2dModel(const MobileRobot2dModel& other)
 
 MobileRobot2dModel::~MobileRobot2dModel()
 {
-
 }

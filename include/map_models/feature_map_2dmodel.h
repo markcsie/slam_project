@@ -6,7 +6,7 @@
 class FeatureMap2dModel : public MapModelInterface
 {
 public:
-  FeatureMap2dModel();
+  FeatureMap2dModel(const Eigen::VectorXd &size, const Eigen::VectorXd &corner);
   FeatureMap2dModel(const FeatureMap2dModel& other);
   virtual ~FeatureMap2dModel();
   

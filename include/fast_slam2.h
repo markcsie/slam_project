@@ -34,11 +34,10 @@ private:
   std::shared_ptr<const RobotModelInterface> robot_;
   std::shared_ptr<const MapModelInterface> map_;
 
-  std::default_random_engine generator;
   double initial_w_;
   std::vector<Particle> particles_;
 
-  void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
+  void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
 
   Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 

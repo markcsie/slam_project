@@ -6,7 +6,6 @@ FeatureMeasurementModel::FeatureMeasurementModel(const Eigen::MatrixXd &Q_t) : Q
 {
   type_ = "Feature Measurement Model";
   dim_ = 2;
-//  Q_t_ = Q_t;
   assert(Q_t_.rows() == 2 && Q_t_.cols() == 2);
 }
 
@@ -17,7 +16,6 @@ FeatureMeasurementModel::FeatureMeasurementModel(const FeatureMeasurementModel& 
 
 FeatureMeasurementModel::~FeatureMeasurementModel()
 {
-
 }
 
 Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
@@ -38,7 +36,6 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_pt
   {
     if (map_model->getType() == FeatureMap2dModel::TYPE)
     {
-      
       return inverseMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), x, z);
     }
   }

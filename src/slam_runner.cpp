@@ -43,7 +43,6 @@ SlamRunner::~SlamRunner()
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
 // TODO: process the message and run the slam algorithm
 //  fast_slam2.process()
-  std::cout<<"aaaaaaaaaaaaaaaaaa"<<std::endl;
   Eigen::VectorXd u(2);
   u[0] = msg.forward_velocity;
   u[1] = msg.angular_velocity;
@@ -55,11 +54,11 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
     z(i,1) = msg.range[i];
     z(i,2) = msg.bearing[i];
   }
-  std::cout<<u[0]<<" "<<u[1]<<std::endl;
-  std::cout<<"z rows: "<<z.rows()<<std::endl;
-  for (int i=0; i<z.rows(); i++){
-    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
-  }  
+//  std::cout<<u[0]<<" "<<u[1]<<std::endl;
+//  std::cout<<"z rows: "<<z.rows()<<std::endl;
+//  for (int i=0; i<z.rows(); i++){
+//    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
+//  }  
   fast_slam2_.process(u, z);
 }
 
@@ -81,7 +80,12 @@ int main(int argc, char **argv)
   std::cout << "initial_w " << initial_w << std::endl;
   ROS_ASSERT(initial_w > 0);
 
-  FeatureMap2dModel map;
+  // TODO: from file
+  Eigen::VectorXd map_size(2);
+  map_size << 8, 15;
+  Eigen::VectorXd map_corner(2);
+  map_corner << -2, -6;
+  FeatureMap2dModel map(map_size, map_corner);
   
   std::vector<double> measurement_noise;
   node.param("slam/measurement_noise", measurement_noise, {1.0, 1.0});

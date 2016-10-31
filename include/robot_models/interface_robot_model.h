@@ -4,6 +4,8 @@
 #include <memory>
 #include <Eigen/Dense>
 
+#include "../utils/random_utils.h"
+
 #include "../motion_models/interface_motion_model.h"
 #include "../measurement_models/interface_measurement_model.h"
 #include "../map_models/interface_map_model.h"
@@ -11,7 +13,7 @@
 class MotionModelInterface;
 class MeasurementModelInterface;
 
-class RobotModelInterface
+class RobotModelInterface : public std::enable_shared_from_this<RobotModelInterface>
 {
 public:
   virtual ~RobotModelInterface();
@@ -41,10 +43,23 @@ public:
     
   const Eigen::MatrixXd &getQt() const;
   
+  Eigen::VectorXd getRandomX(const std::shared_ptr<const MapModelInterface> &map) const 
+  {
+    Eigen::VectorXd p = map->getRandomPosition();
+    assert(dim_ >= map->getDim());
+    p.conservativeResize(dim_, Eigen::NoChange);
+    
+    // orientation
+    for (size_t i = map->getDim(); i < p.rows(); i++) {
+      p[i] = Utils::sampleUniform(-M_PI, +M_PI);
+    }
+
+    return p;
+  };
+  
 protected:
   RobotModelInterface(); // abstract base class
 
-  
   std::string type_;
   size_t dim_;
   Eigen::VectorXd init_x_;

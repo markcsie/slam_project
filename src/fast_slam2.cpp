@@ -7,7 +7,10 @@
 FastSlam2::FastSlam2(const size_t &num_particles, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
 particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
 {
-
+  for (Particle &p : particles_) {
+    p.x_ = robot.getRandomX(map_);
+    p.w_ = initial_w_;
+  }
 }
 
 FastSlam2::FastSlam2(const FastSlam2& other)
@@ -31,34 +34,30 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   // std::cout << sampleMultivariateGaussian(mean, cov) << std::endl;
 
   // implement the algorithm in Table 13.3
-  std::cout << u[0] << " " << u[1] << std::endl;
-  for (int i = 0; i < z.rows(); i++)
-  {
-    std::cout << z(i, 0) << " " << z(i, 1) << " " << z(i, 2) << std::endl;
-  }
-  std::cout << "abababababa" << std::endl;
+//  std::cout << "u: " << u.transpose() << std::endl;
+//  for (int i = 0; i < z.rows(); i++)
+//  {
+//    std::cout << "z: " << z << std::endl;
+//  }
 
   for (size_t k = 0; k < particles_.size(); k++)
   {
     updateParticle(particles_[k], u, z);
   }
 
-  std::cout << "bbbb" << std::endl;
   // resampling
   std::vector<double> weights(particles_.size());
   for (size_t i = 0; i < weights.size(); i++)
   {
     weights[i] = particles_[i].w_;
   }
-  std::discrete_distribution<int> sampler(weights.begin(), weights.end());
   std::vector<Particle> new_particles(particles_.size());
   for (size_t i = 0; i < particles_.size(); i++)
   {
-    new_particles[i] = particles_[sampler(generator)];
+    new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
+    std::cout << "new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
   }
   particles_ = new_particles;
-
-  std::cout<<"cccccc"<<std::endl;
 }
 
 Eigen::MatrixXd FastSlam2::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
@@ -109,39 +108,33 @@ Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Ei
   return robot_->jacobianFeature(map_, mean, x);
 }
 
-void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
+void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
 {
-  //    size_t correspondence =;
+  // size_t correspondence =;
   // sample pose
-  std::cout<<"updateParticle start"<<std::endl;
-  
-  
-  std::cout<<"p.x_: "<<(p.x_).transpose()<<std::endl;
-  
-  const size_t num_measurements = z.rows();
+  const size_t num_measurements = features.rows();
   for (size_t m = 0; m < num_measurements; m++) // for each measurement, update its corresponding kalman filter
   {
-    const int feature_id = z(m, 0);
-    std::cout<<"feature_id: "<<feature_id<<std::endl;
+    const Eigen::VectorXd feature = features.row(m).transpose();
+    const int feature_id = feature[0];
+    const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
     auto iter = p.features_.find(feature_id);
 
     Eigen::MatrixXd R_t = calculateRt(p.x_, u);
-
     if (iter == p.features_.end()) // first time seeing the feature, do initialization 
     {
-      std::cout<<"updateParticle if yes, start"<<std::endl;
-  
+      std::cout << "new feature_id: " << feature_id << std::endl;
+
       p.x_ = samplePose(p.x_, u);
       p.features_[feature_id].mean_ = inverseMeasurement(p.x_, z);
       Eigen::MatrixXd H_m = jacobianFeature(p.features_[feature_id].mean_, p.x_);
       p.features_[feature_id].covariance_ = H_m.inverse().transpose() * robot_->getQt() * H_m.inverse();
       p.w_ = initial_w_;
-      std::cout<<"updateParticle if yes"<<std::endl;
-  
+
     } else
     {
-      std::cout<<"updateParticle if not, start"<<std::endl;
-  
+      std::cout << "update feature_id: " << feature_id << std::endl;
+      
       Eigen::VectorXd x_t = predictPose(p.x_, u);
       Eigen::MatrixXd H_m = jacobianFeature(p.features_[feature_id].mean_, x_t);
 
@@ -163,10 +156,6 @@ void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eige
       p.features_[feature_id].covariance_ = (Eigen::MatrixXd::Identity(K.rows(), K.rows()) - K * H_m) * p.features_[feature_id].covariance_; // update feature covariance
       Eigen::MatrixXd temp = (z - z_hat).transpose() * L.inverse() * (z - z_hat);
       p.w_ = (1 / std::sqrt(L.determinant() * 2 * M_PI)) * std::exp(temp(0, 0) / -2);
-      std::cout<<"updateParticle if not"<<std::endl;
-  
     }
   }
-  std::cout<<"updateParticle end"<<std::endl;
-  
 }
