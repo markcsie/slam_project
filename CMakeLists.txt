@@ -86,6 +86,12 @@ add_executable(slam_runner_node
   src/map_models/feature_map_2dmodel.cpp
 )
 
+add_executable(points_and_lines src/points_and_lines.cpp)
+target_link_libraries(points_and_lines ${catkin_LIBRARIES})
+
 target_link_libraries(slam_runner_node
   ${catkin_LIBRARIES}
 )
+
+add_executable(basic_shapes src/basic_shapes.cpp)
+target_link_libraries(basic_shapes ${catkin_LIBRARIES})
