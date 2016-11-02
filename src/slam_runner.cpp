@@ -12,7 +12,7 @@
 class SlamRunner
 {
 public:
-  SlamRunner(const size_t &num_particles, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
+  SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
@@ -20,19 +20,16 @@ public:
 
 private:
   FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
+  size_t frame_count_;
 };
 
-SlamRunner::SlamRunner(const size_t &num_particles, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map)
-: fast_slam2_(num_particles, initial_w, robot, map)
+SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map)
+: fast_slam2_(num_particles, initial_x, initial_w, robot, map), frame_count_(0)
 {
-  // TODO: This is just testing
-  // Eigen::VectorXd u;
-  // Eigen::MatrixXd z;
-  // fast_slam2_.process(u, z);
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other)
-: fast_slam2_(other.fast_slam2_)
+: fast_slam2_(other.fast_slam2_), frame_count_(other.frame_count_)
 {
 }
 
@@ -41,6 +38,7 @@ SlamRunner::~SlamRunner()
 }
 
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
+  frame_count_++;
 // TODO: process the message and run the slam algorithm
 //  fast_slam2.process()
   Eigen::VectorXd u(2);
@@ -59,6 +57,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
 //  for (int i=0; i<z.rows(); i++){
 //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
 //  }  
+  std::cout << "frame " << frame_count_ << std::endl;
   fast_slam2_.process(u, z);
 }
 
@@ -101,10 +100,11 @@ int main(int argc, char **argv)
 
   MobileRobot2dModel robot(velocity_model, feature_model);
   
-  SlamRunner slam_runner(num_particles, initial_w, robot, map); // TODO: dimension depends on the incoming data
+  Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
+  initial_x << 1.916028, -2.676211, 0.390500;
+  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_w, robot, map); // TODO: dimension depends on the incoming data
 
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100, &SlamRunner::frameCallback, &slam_runner);
-
 
   while (ros::ok())
   {

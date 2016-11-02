@@ -25,7 +25,7 @@ struct Particle
 class FastSlam2
 {
 public:
-  FastSlam2(const size_t &num_particles, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
+  FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 
@@ -48,6 +48,8 @@ private:
   Eigen::VectorXd inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z) const;
   Eigen::MatrixXd jacobianPose(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
   Eigen::MatrixXd jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
+  
+  bool dead_reckoning_;
 };
 
 #endif /* FAST_SLAM2_H */
