@@ -15,6 +15,8 @@ public:
   SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
+  
+  Particle getParticle(const size_t &i);
 
   void frameCallback(const slam_project::Robot_Odometry &msg);
 
@@ -35,6 +37,11 @@ SlamRunner::SlamRunner(const SlamRunner& other)
 
 SlamRunner::~SlamRunner()
 {
+}
+
+Particle SlamRunner::getParticle(const size_t &i)
+{
+  return fast_slam2_.getParticle(i);
 }
 
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
@@ -59,6 +66,11 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
 //  }  
   std::cout << "frame " << frame_count_ << std::endl;
   fast_slam2_.process(u, z);
+  
+  Particle p = fast_slam2_.getParticle(0);
+  // TODO: publish for visualization
+  // p.x_
+  
 }
 
 int main(int argc, char **argv)

@@ -29,6 +29,7 @@ public:
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 
+  Particle getParticle(const size_t &i);
   void process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
 private:
   std::shared_ptr<const RobotModelInterface> robot_;

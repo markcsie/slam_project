@@ -27,6 +27,11 @@ FastSlam2::~FastSlam2()
 {
 }
 
+Particle FastSlam2::getParticle(const size_t &i) 
+{
+  return particles_[i];
+}
+
 void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
 {
   // TODO: This is just testing
