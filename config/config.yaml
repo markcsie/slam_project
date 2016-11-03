@@ -3,5 +3,7 @@
 slam:
   num_particles: 1
   initial_w: 1.0
-  motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  #motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  motion_noise: [0, 0, 0, 0, 0, 0]
+  
   measurement_noise: [0.1, 0.1]

@@ -6,8 +6,14 @@
 #include "measurement_models/feature_measurement_model.h"
 #include "slam_project/Robot_Odometry.h"
 #include "slam_project/requestBarcode.h"
-
+#include "slam_project/Robot_GroundTruth.h"
 #include "std_msgs/String.h" // temporary
+#include "../include/data_reader.h"
+
+//global variable
+vector<groundtruth> robot_groundtruth;
+groundtruth g_cur;
+
 
 class SlamRunner
 {
@@ -17,7 +23,8 @@ public:
   virtual ~SlamRunner();
   
   Particle getParticle(const size_t &i);
-
+  ros::Publisher dataPublisher;
+  slam_project::Robot_GroundTruth msg2;
   void frameCallback(const slam_project::Robot_Odometry &msg);
 
 private:
@@ -70,15 +77,21 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
   Particle p = fast_slam2_.getParticle(0);
   // TODO: publish for visualization
   // p.x_
-  
-}
+  g_cur.x = p.x_[0];
+  g_cur.y = p.x_[1];
+  cout<<g_cur.x<<" "<<g_cur.y<<endl;
+  msg2.x = p.x_[0];
+  msg2.y = p.x_[1];
+  dataPublisher.publish(msg2);
+} 
+
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
-  ros::Rate rate(1.0);
+  ros::Rate rate(100);
   ROS_INFO("start spinning");
 
   int num_particles;
@@ -117,7 +130,9 @@ int main(int argc, char **argv)
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_w, robot, map); // TODO: dimension depends on the incoming data
 
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100, &SlamRunner::frameCallback, &slam_runner);
+  slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
 
+  int i=0;
   while (ros::ok())
   {
     ros::spinOnce(); // check for incoming messages

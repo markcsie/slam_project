@@ -14,7 +14,6 @@ void readData(){
   //read data
   //vector<measure> robot_measurment;
   string path = ros::package::getPath("slam_project");
-  cout<<path<<endl;
   ifstream file1(path+"/data/newRobot1_Measurement.txt");
   ifstream file1_2(path+ "/data/newRobot1_Measurement.txt");
   int line_count1 = 0;
@@ -131,7 +130,6 @@ slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i){
       msg.y = robot_groundtruth[i].y;
       msg.orientation = robot_groundtruth[i].orientation;
       i++;  
-      std::cout<<"time: "<<msg.time<<" "<<msg.x<<" "<<msg.y<<" "<<msg.orientation<<endl;
     }
     return msg;
 }
@@ -139,7 +137,7 @@ slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i){
 slam_project::Robot_Odometry sendMsg_Odometry(int j){
 
     slam_project::Robot_Odometry msg_odometry;
-    if (j<robot_odometry.size()){
+    if (j</*robot_odometry.size()*/7000){
   
       msg_odometry.time = robot_odometry[j].time;
       msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
@@ -161,12 +159,9 @@ slam_project::Robot_Odometry sendMsg_Odometry(int j){
             msg_subject.push_back(robot_measurement[k].subject);
             msg_range.push_back(robot_measurement[k].range);
             msg_bearing.push_back(robot_measurement[k].bearing);
-/*              msg_odometry.subject = robot_measurement[k].subject;
-              msg_odometry.range = robot_measurement[k].range;
-              msg_odometry.bearing = robot_measurement[k].bearing;*/
-            k++;
             count++;
           }
+          k++;
         }  
 
       }
@@ -184,22 +179,9 @@ slam_project::Robot_Odometry sendMsg_Odometry(int j){
       }
       msg_odometry.num = count;
 
-     /* if (robot_measurement[k].time == msg_odometry.time){
-        if (robot_measurement[k].subject != subject[2] && 
-           robot_measurement[k].subject != subject[3] &&
-           robot_measurement[k].subject != subject[4] &&
-           robot_measurement[k].subject != subject[5]){
-            msg_odometry.flag = 1;
-            msg_odometry.subject = robot_measurement[k].subject;
-            msg_odometry.range = robot_measurement[k].range;
-            msg_odometry.bearing = robot_measurement[k].bearing;
-            k++;
-        } 
-      }else{
-        msg_odometry.flag = 0;
-      }*/
 
-      cout<<"time: "<<msg_odometry.time<<" "<<
+
+      cout<<"j: "<<j<<" time: "<<msg_odometry.time<<" "<<
           "num: "<<msg_odometry.num<<endl;
       /*dataPublisher2.publish(msg_odometry);*/
     }
@@ -232,16 +214,18 @@ int main(int argc, char **argv) {
 //  ros::spin();
 
 
-  ros::Rate rate(50);
+  ros::Rate rate(100);
   ROS_INFO("start spinning");
   int i=0,j=0;
+
+  cout<<"robot odometry size: "<<robot_odometry.size()<<endl;
   while (ros::ok()) {
-    dataPublisher3.publish(sendMsg_GroundTruth(i));
+    //dataPublisher3.publish(sendMsg_GroundTruth(i));
     dataPublisher2.publish(sendMsg_Odometry(j));
-    i++;
     j++;
     ros::spinOnce(); // check for incoming messages
     rate.sleep();
+    cout<<robot_odometry.size()<<endl;
   }
 
   return EXIT_SUCCESS;

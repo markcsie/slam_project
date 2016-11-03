@@ -15,7 +15,7 @@ particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
   }
   
   // for debugging
-  dead_reckoning_ = false;
+  dead_reckoning_ = true;
 }
 
 FastSlam2::FastSlam2(const FastSlam2& other)
@@ -54,7 +54,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z)
   for (auto &p : particles_)
   {
     updateParticle(p, u, z);
-    std::cout << "p.x_ " << p.x_.transpose() << std::endl;
+  //  std::cout << "p.x_ " << p.x_.transpose() << std::endl;  //for debug
   }
 
   if (!dead_reckoning_)
