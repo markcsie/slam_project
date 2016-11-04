@@ -82,6 +82,20 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
   cout<<g_cur.x<<" "<<g_cur.y<<endl;
   msg2.x = p.x_[0];
   msg2.y = p.x_[1];
+
+  msg2.num = 15;  //TODO
+  msg2.landmark_x.resize(15); //TODO
+  msg2.landmark_y.resize(15);
+  int i=0;
+  cout<<"map size: "<<p.features_.size()<<endl;
+  for ( auto n = p.features_.begin(); n != p.features_.end(); ++n ){
+//  for( const auto& n : p.features_ ) {
+    msg2.landmark_x[i] = n->second.mean_[0];
+    cout<<"*******"<<n->second.mean_[0]<<endl;
+    msg2.landmark_y[i] = n->second.mean_[1];
+    i++;
+  }
+
   dataPublisher.publish(msg2);
 } 
 
