@@ -72,8 +72,15 @@ Eigen::VectorXd VelocityMotionModel::predictPose(const std::shared_ptr<const Mob
 {
   // g(x_{t-1}, u_t)
   Eigen::VectorXd x_next(robot_model->getDim());
-  double q = u[0] / u[1];
-  x_next << x[0] - q * std::sin(x[2]) + q * std::sin(x[2] + u[1] * delta_t_), x[1] + q * std::cos(x[2]) - q * std::cos(x[2] + u[1] * delta_t_), x[2] + u[1] * delta_t_;
+  if (u[1] == 0)
+  {
+    x_next << x[0] + u[0] * std::cos(x[2]) * delta_t_, x[1] + u[0] * std::sin(x[2]) * delta_t_, x[2];
+  }
+  else
+  {
+    double r = u[0] / u[1];
+    x_next << x[0] - r * std::sin(x[2]) + r * std::sin(x[2] + u[1] * delta_t_), x[1] + r * std::cos(x[2]) - r * std::cos(x[2] + u[1] * delta_t_), x[2] + u[1] * delta_t_;
+  }
   return x_next;
 }
 
@@ -84,13 +91,13 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Mobi
   double v_hat = u[0] + Utils::sampleGaussian(0, alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2));
   double w_hat = u[1] + Utils::sampleGaussian(0, alphas_[2] * std::pow(u[0], 2) + alphas_[3] * std::pow(u[1], 2));
   double gamma_hat = Utils::sampleGaussian(0, alphas_[4] * std::pow(u[0], 2) + alphas_[5] * std::pow(u[1], 2));
-  double r = v_hat / w_hat;
   if (w_hat == 0)
   {
-    x_next << x[0] + v_hat * std::cos(x[2]) * delta_t_, x[1] + v_hat * std::sin(x[2]) * delta_t_, x[2];
+    x_next << x[0] + v_hat * std::cos(x[2]) * delta_t_, x[1] + v_hat * std::sin(x[2]) * delta_t_, x[2] + gamma_hat * delta_t_;
   }
   else
   {
+    double r = v_hat / w_hat;
     x_next << x[0] - r * std::sin(x[2]) + r * std::sin(x[2] + w_hat * delta_t_), x[1] + r * std::cos(x[2]) - r * std::cos(x[2] + w_hat * delta_t_), x[2] + w_hat * delta_t_ + gamma_hat * delta_t_;
   }
   return x_next;

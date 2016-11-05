@@ -70,7 +70,7 @@ Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_pt
 {
   // z = h(mean_{t-1}, x)
   Eigen::VectorXd z(dim_);
-  z << std::sqrt(std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2)), std::atan2(mean[1] - x[1], mean[0] - x[0]);
+  z << std::sqrt(std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2)), std::atan2(mean[1] - x[1], mean[0] - x[0]) - x[2];
   return z;
 }
 
@@ -78,7 +78,7 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_pt
 {
   // mean_t = h^{-1}(x_t, z_t))
   Eigen::VectorXd mean(map_model->getDim());
-  mean << x[0] + z[0] * std::cos(z[1] + x[2]), x[1] + z[0] * std::cos(z[1] + x[2]);
+  mean << x[0] + z[0] * std::cos(z[1] + x[2]), x[1] + z[0] * std::sin(z[1] + x[2]);
   return mean;
 }
 

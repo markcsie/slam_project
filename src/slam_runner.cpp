@@ -14,14 +14,13 @@
 vector<groundtruth> robot_groundtruth;
 groundtruth g_cur;
 
-
 class SlamRunner
 {
 public:
   SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
-  
+
   Particle getParticle(const size_t &i);
   ros::Publisher dataPublisher;
   slam_project::Robot_GroundTruth msg2;
@@ -51,54 +50,56 @@ Particle SlamRunner::getParticle(const size_t &i)
   return fast_slam2_.getParticle(i);
 }
 
-void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg){
+void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
+{
   frame_count_++;
-// TODO: process the message and run the slam algorithm
-//  fast_slam2.process()
+  // TODO: process the message and run the slam algorithm
+  //  fast_slam2.process()
   Eigen::VectorXd u(2);
   u[0] = msg.forward_velocity;
   u[1] = msg.angular_velocity;
 
   int len = msg.num;
   Eigen::MatrixXd z(len, 3);
-  for (int i=0; i<len; i++){
-    z(i,0) = msg.subject[i];
-    z(i,1) = msg.range[i];
-    z(i,2) = msg.bearing[i];
+  for (int i = 0; i < len; i++)
+  {
+    z(i, 0) = msg.subject[i];
+    z(i, 1) = msg.range[i];
+    z(i, 2) = msg.bearing[i];
   }
-//  std::cout<<u[0]<<" "<<u[1]<<std::endl;
-//  std::cout<<"z rows: "<<z.rows()<<std::endl;
-//  for (int i=0; i<z.rows(); i++){
-//    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
-//  }  
-  std::cout << "frame " << frame_count_ << std::endl;
+  //  std::cout<<u[0]<<" "<<u[1]<<std::endl;
+  //  std::cout<<"z rows: "<<z.rows()<<std::endl;
+  //  for (int i=0; i<z.rows(); i++){
+  //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
+  //  }  
+  std::cout << "ggg frame " << frame_count_ << std::endl;
   fast_slam2_.process(u, z);
-  
+
   Particle p = fast_slam2_.getParticle(0);
   // TODO: publish for visualization
   // p.x_
   g_cur.x = p.x_[0];
   g_cur.y = p.x_[1];
-  cout<<g_cur.x<<" "<<g_cur.y<<endl;
+  //  cout<<g_cur.x<<" "<<g_cur.y<<endl;
   msg2.x = p.x_[0];
   msg2.y = p.x_[1];
 
-  msg2.num = 15;  //TODO
+  msg2.num = 15; //TODO
   msg2.landmark_x.resize(15); //TODO
   msg2.landmark_y.resize(15);
-  int i=0;
-  cout<<"map size: "<<p.features_.size()<<endl;
-  for ( auto n = p.features_.begin(); n != p.features_.end(); ++n ){
-//  for( const auto& n : p.features_ ) {
+  int i = 0;
+  cout << "map size: " << p.features_.size() << endl;
+  for (auto n = p.features_.begin(); n != p.features_.end(); ++n)
+  {
+    //  for( const auto& n : p.features_ ) {
     msg2.landmark_x[i] = n->second.mean_[0];
-    cout<<"*******"<<n->second.mean_[0]<<endl;
+    cout << "*******" << n->second.mean_[0] << endl;
     msg2.landmark_y[i] = n->second.mean_[1];
     i++;
   }
 
   dataPublisher.publish(msg2);
-} 
-
+}
 
 int main(int argc, char **argv)
 {
@@ -124,21 +125,21 @@ int main(int argc, char **argv)
   Eigen::VectorXd map_corner(2);
   map_corner << -2, -6;
   FeatureMap2dModel map(map_size, map_corner);
-  
+
   std::vector<double> measurement_noise;
-  node.param("slam/measurement_noise", measurement_noise, {1.0, 1.0});
+  node.param("slam/measurement_noise", measurement_noise,{1.0, 1.0});
   Eigen::MatrixXd Q_t(2, 2);
   Q_t << measurement_noise[0], 0.0,
-         0.0, measurement_noise[1];
+          0.0, measurement_noise[1];
   FeatureMeasurementModel feature_model(Q_t);
-  
+
   std::vector<double> motion_noise;
-  node.param("slam/motion_noise", motion_noise, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+  node.param("slam/motion_noise", motion_noise,{1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
   double delta_t = 0.02; // TODO: from data_reader
   VelocityMotionModel velocity_model(motion_noise, delta_t);
 
   MobileRobot2dModel robot(velocity_model, feature_model);
-  
+
   Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x << 1.916028, -2.676211, 0.390500;
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_w, robot, map); // TODO: dimension depends on the incoming data
@@ -146,7 +147,7 @@ int main(int argc, char **argv)
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100, &SlamRunner::frameCallback, &slam_runner);
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
 
-  int i=0;
+  int i = 0;
   while (ros::ok())
   {
     ros::spinOnce(); // check for incoming messages

@@ -30,7 +30,7 @@ public:
   virtual ~FastSlam2();
 
   Particle getParticle(const size_t &i);
-  void process(const Eigen::VectorXd &u, const Eigen::MatrixXd &z);
+  void process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
 private:
   std::shared_ptr<const RobotModelInterface> robot_;
   std::shared_ptr<const MapModelInterface> map_;
@@ -38,7 +38,7 @@ private:
   double initial_w_;
   std::vector<Particle> particles_;
 
-  void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
+  void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
 
   Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 
