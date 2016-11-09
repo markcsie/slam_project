@@ -118,7 +118,7 @@ Eigen::MatrixXd FastSlam2::jacobianFeature(const Eigen::VectorXd &mean, const Ei
 {
   return robot_->jacobianFeature(map_, mean, x);
 }
-
+// TODO: check if z_t is after applying u_t????
 void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   const int feature_id = feature[0];

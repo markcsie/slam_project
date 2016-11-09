@@ -7,7 +7,7 @@
 #include "slam_project/Robot_Odometry.h"
 #include "slam_project/requestBarcode.h"
 #include "slam_project/Robot_GroundTruth.h"
-#include "std_msgs/String.h" // temporary
+#include "std_msgs/Float64MultiArray.h"
 #include "../include/data_reader.h"
 
 //global variable
@@ -84,9 +84,15 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   msg2.x = p.x_[0];
   msg2.y = p.x_[1];
 
-  msg2.num = 15; //TODO
-  msg2.landmark_x.resize(15); //TODO
-  msg2.landmark_y.resize(15);
+  msg2.num = p.features_.size(); //TODO
+  msg2.landmark_x.resize(msg2.num); //TODO
+  msg2.landmark_y.resize(msg2.num);
+  msg2.landmark_cov.resize(msg2.num);
+
+  msg2.landmark_x.clear();
+  msg2.landmark_y.clear();
+  msg2.landmark_cov.clear();
+
   int i = 0;
   cout << "map size: " << p.features_.size() << endl;
   for (auto n = p.features_.begin(); n != p.features_.end(); ++n)
@@ -101,6 +107,21 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     msg2.landmark_x[i] = n->second.mean_[0];
     cout << "*******" << n->second.mean_[0] << endl;
     msg2.landmark_y[i] = n->second.mean_[1];
+
+    msg2.landmark_cov[i].layout.dim.resize(2);
+    msg2.landmark_cov[i].layout.dim.clear();
+    msg2.landmark_cov[i].layout.dim[0].label = "row";
+    msg2.landmark_cov[i].layout.dim[0].size = 2;
+    msg2.landmark_cov[i].layout.dim[0].stride = 4;
+    msg2.landmark_cov[i].layout.dim[1].label = "col";
+    msg2.landmark_cov[i].layout.dim[1].size = 2;
+    msg2.landmark_cov[i].layout.dim[1].stride = 2;
+    msg2.landmark_cov[i].layout.data_offset = 0;
+    msg2.landmark_cov[i].data[0] = n->second.covariance_(0, 0);
+    msg2.landmark_cov[i].data[1] = n->second.covariance_(0, 1);
+    msg2.landmark_cov[i].data[2] = n->second.covariance_(1, 0);
+    msg2.landmark_cov[i].data[3] = n->second.covariance_(1, 1);
+
     i++;
   }
 

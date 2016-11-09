@@ -3,6 +3,10 @@
 #include <ros/package.h>
 #include "../include/data_reader.h"
 #include <cmath>
+
+#include <Eigen/Eigenvalues> 
+
+
 vector<groundtruth> robot_groundtruth;
 vector<groundtruth> new_robot_groundtruth;
 vector<landmark> landmark_groundtruth;
@@ -95,6 +99,21 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
     {
       p.x = subMsg.landmark_x[i];
       p.y = subMsg.landmark_y[i];
+      
+      for (size_t k = 0; k < subMsg.num; k++) {
+        Eigen::MatrixXd cov(2, 2);
+        cov(0, 0) = subMsg.landmark_cov[k].data[0];
+        cov(0, 1) = subMsg.landmark_cov[k].data[1];
+        cov(1, 0) = subMsg.landmark_cov[k].data[2];
+        cov(1, 1) = subMsg.landmark_cov[k].data[3];
+        
+        Eigen::EigenSolver<Eigen::MatrixXd> es(cov);
+        
+        Eigen::VectorXd axis1 = es.eigenvalues().real()[0] * es.eigenvectors().real().col(0);
+        Eigen::VectorXd axis2 = es.eigenvalues().real()[1] * es.eigenvectors().real().col(1);
+        // TODO: draw an ellipse with these two axes
+      }
+      
       points4.points.push_back(p);
       cout << "**************" << p.x << " " << p.y << endl;
     }
