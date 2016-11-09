@@ -8,9 +8,7 @@
 
 
 vector<groundtruth> robot_groundtruth;
-vector<groundtruth> new_robot_groundtruth;
 vector<landmark> landmark_groundtruth;
-groundtruth new_g;
 int k = 0;
 geometry_msgs::Point p;
 ros::Publisher marker_pub;
@@ -77,93 +75,91 @@ void readlandmarkGroundTruth()
 
 void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 {
-  new_g.x = subMsg.x;
-  new_g.y = subMsg.y;
-  cout << new_g.x << endl;
-  new_robot_groundtruth.push_back(new_g);
-  cout << "*******" << subMsg.num << endl;
-  int len = subMsg.num;
   if (k < 7000 /*new_robot_groundtruth.size()*/)
   {
+    k++;
     p.x = robot_groundtruth[k].x;
     p.y = robot_groundtruth[k].y;
     points.points.push_back(p);
+    marker_pub.publish(points);
 
-    p.x = new_robot_groundtruth[k].x;
-    p.y = new_robot_groundtruth[k].y;
+    cout << "ggg ************** robot_groundtruth[k] x y " << robot_groundtruth[k].x << " " << robot_groundtruth[k].y << endl;
+    if (std::isnan(subMsg.x) || std::isnan(subMsg.y))
+    {
+      return;
+    }
+
+    p.x = subMsg.x;
+    p.y = subMsg.y;
     points2.points.push_back(p);
-    cout << "**************" << p.x << " " << p.y << endl;
-    k++;
+    marker_pub2.publish(points2);
+    cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
 
-
+    int len = subMsg.num;
+    cout << "*******" << subMsg.num << endl;
     for (int i = 0; i < len; i++)
     {
+      if (std::isnan(subMsg.landmark_x[i]) || std::isnan(subMsg.landmark_y[i]))
+      {
+        continue;
+      }
 
       p.x = subMsg.landmark_x[i];
       p.y = subMsg.landmark_y[i];
-      
-      if (std::isnan(p.x) || std::isnan(p.y))
-        continue;
-
-      for (size_t k = 0; k < subMsg.num; k++) {
-        Eigen::MatrixXd cov(2, 2);
-        cov(0, 0) = subMsg.landmark_cov[k].data[0];
-        cov(0, 1) = subMsg.landmark_cov[k].data[1];
-        cov(1, 0) = subMsg.landmark_cov[k].data[2];
-        cov(1, 1) = subMsg.landmark_cov[k].data[3];
-        
-        Eigen::EigenSolver<Eigen::MatrixXd> es(cov);
-        
-        Eigen::VectorXd axis1 = es.eigenvalues().real()[0] * es.eigenvectors().real().col(0);
-        Eigen::VectorXd axis2 = es.eigenvalues().real()[1] * es.eigenvectors().real().col(1);
-        // TODO: draw an ellipse with these two axes
-
-        visualization_msgs::Marker cur_e;
-        cur_e.header.frame_id="map";
-        cur_e.header.stamp = ros::Time::now();
-        cur_e.ns = "points_and_lines";
-        cur_e.action = visualization_msgs::Marker::ADD;
-        cur_e.type = visualization_msgs::Marker::CYLINDER;
-
-        double angle = std::atan(axis1[1]/axis1[0]);
-
-        cur_e.pose.orientation.x = std::cos(angle/2);
-        cur_e.pose.orientation.y = std::sin(angle/2);
-        cur_e.pose.orientation.z = 0;
-        cur_e.pose.orientation.w = 0;
-
-               //draw ellipse 
-        cur_e.pose.position.x = p.x;
-        cur_e.pose.position.y = p.y;
-        cur_e.pose.position.z = 0;
-
-       
-        // Set the scale of the marker -- 1x1x1 here means 1m on a side
-        cur_e.scale.x = axis1.norm();
-        cur_e.scale.y = axis2.norm();
-        cur_e.scale.z = 0;
-        
-        cur_e.color.r = 0.0f;
-        cur_e.color.g = 1.0f;
-        cur_e.color.b = 0.0f;
-        cur_e.color.a = 1.0;
-
-        marker_pub5.publish(cur_e);
-
-      }
-      
       points4.points.push_back(p);
-      cout << "**************" << p.x << " " << p.y << endl;
+      marker_pub4.publish(points4);
+      cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_x[i] << endl;
+
+      Eigen::MatrixXd cov(2, 2);
+      cov(0, 0) = subMsg.landmark_cov[i].data[0];
+      cov(0, 1) = subMsg.landmark_cov[i].data[1];
+      cov(1, 0) = subMsg.landmark_cov[i].data[2];
+      cov(1, 1) = subMsg.landmark_cov[i].data[3];
+      std::cout << "ggg cov " << std::endl;
+      std::cout << cov << std::endl;
+
+      Eigen::EigenSolver<Eigen::MatrixXd> es(cov);
+
+      std::cout << "ggg" << std::endl;
+      Eigen::VectorXd axis1 = es.eigenvalues().real()[0] * es.eigenvectors().real().col(0);
+      Eigen::VectorXd axis2 = es.eigenvalues().real()[1] * es.eigenvectors().real().col(1);
+      std::cout << "ggg" << std::endl;
+      // TODO: draw an ellipse with these two axes
+
+      visualization_msgs::Marker cur_e;
+      cur_e.header.frame_id = "map";
+      cur_e.header.stamp = ros::Time::now();
+      cur_e.ns = "points_and_lines";
+      cur_e.action = visualization_msgs::Marker::ADD;
+      cur_e.type = visualization_msgs::Marker::CYLINDER;
+
+      double angle = std::atan(axis1[1] / axis1[0]);
+
+      cur_e.pose.orientation.x = std::cos(angle / 2);
+      cur_e.pose.orientation.y = std::sin(angle / 2);
+      cur_e.pose.orientation.z = 0;
+      cur_e.pose.orientation.w = 0;
+
+      //draw ellipse 
+      cur_e.pose.position.x = p.x;
+      cur_e.pose.position.y = p.y;
+      cur_e.pose.position.z = 0;
+
+
+      // Set the scale of the marker -- 1x1x1 here means 1m on a side
+      cur_e.scale.x = axis1.norm();
+      cur_e.scale.y = axis2.norm();
+      cur_e.scale.z = 0;
+
+      cur_e.color.r = 0.0f;
+      cur_e.color.g = 1.0f;
+      cur_e.color.b = 0.0f;
+      cur_e.color.a = 1.0;
+
+      marker_pub5.publish(cur_e);
     }
-
-    marker_pub.publish(points);
-    marker_pub2.publish(points2);
-    marker_pub4.publish(points4);
   }
-
-
 }
-
 
 int main(int argc, char** argv)
 {
@@ -180,7 +176,6 @@ int main(int argc, char** argv)
   marker_pub5 = n.advertise<visualization_msgs::Marker>("visualization_marker5", 10);
   cout << "aaa" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 1000, publishMsg_callback);
-  cout << new_robot_groundtruth.size() << endl;
 
   ros::Rate r(100);
 
@@ -194,7 +189,7 @@ int main(int argc, char** argv)
   points4.pose.orientation.w = points3.pose.orientation.w = points2.pose.orientation.w = points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
 
   points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
-   // POINTS markers use x and y scale for width/height respectively
+  // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
 
@@ -230,8 +225,8 @@ int main(int argc, char** argv)
   }
 
 
-  cout<<M_PI<<endl;
-  cout<<std::atan(1)<<endl;
+  cout << M_PI << endl;
+  cout << std::atan(1) << endl;
   while (ros::ok())
   {
     marker_pub3.publish(points3);

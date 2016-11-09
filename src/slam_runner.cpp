@@ -85,13 +85,13 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   msg2.y = p.x_[1];
 
   msg2.num = p.features_.size(); //TODO
-  msg2.landmark_x.resize(msg2.num); //TODO
-  msg2.landmark_y.resize(msg2.num);
-  msg2.landmark_cov.resize(msg2.num);
-
   msg2.landmark_x.clear();
   msg2.landmark_y.clear();
   msg2.landmark_cov.clear();
+  
+  msg2.landmark_x.resize(msg2.num); //TODO
+  msg2.landmark_y.resize(msg2.num);
+  msg2.landmark_cov.resize(msg2.num);
 
   int i = 0;
   cout << "map size: " << p.features_.size() << endl;
