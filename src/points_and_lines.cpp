@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <ros/package.h>
 #include "../include/data_reader.h"
 #include <cmath>
@@ -17,7 +18,7 @@ ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
 ros::Publisher marker_pub5;
 visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4;
-vector<visualization_msgs::Marker> ellipse;
+visualization_msgs::MarkerArray ellipse;
 
 void readGroundTruth()
 {
@@ -83,7 +84,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
     points.points.push_back(p);
     marker_pub.publish(points);
 
-    cout << "ggg ************** robot_groundtruth[k] x y " << robot_groundtruth[k].x << " " << robot_groundtruth[k].y << endl;
+//    cout << "ggg ************** robot_groundtruth[k] x y " << robot_groundtruth[k].x << " " << robot_groundtruth[k].y << endl;
     if (std::isnan(subMsg.x) || std::isnan(subMsg.y))
     {
       return;
@@ -97,6 +98,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
     int len = subMsg.num;
     cout << "*******" << subMsg.num << endl;
+    ellipse.markers.resize(len);
     for (int i = 0; i < len; i++)
     {
       if (std::isnan(subMsg.landmark_x[i]) || std::isnan(subMsg.landmark_y[i]))
@@ -107,7 +109,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
       p.x = subMsg.landmark_x[i];
       p.y = subMsg.landmark_y[i];
       points4.points.push_back(p);
-      marker_pub4.publish(points4);
+//      marker_pub4.publish(points4);
       cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_y[i] << endl;
 
       Eigen::MatrixXd cov(2, 2);
@@ -126,38 +128,38 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
       std::cout << "ggg" << std::endl;
       // TODO: draw an ellipse with these two axes
 
-      visualization_msgs::Marker cur_e;
-      cur_e.header.frame_id = "map";
-      cur_e.header.stamp = ros::Time::now();
-      cur_e.ns = "points_and_lines";
-      cur_e.action = visualization_msgs::Marker::ADD;
-      cur_e.type = visualization_msgs::Marker::CYLINDER;
+      ellipse.markers[i].header.frame_id = "map";
+      ellipse.markers[i].header.stamp = ros::Time::now();
+      ellipse.markers[i].ns = "points_and_lines";
+      ellipse.markers[i].action = visualization_msgs::Marker::ADD;
+      ellipse.markers[i].type = visualization_msgs::Marker::CYLINDER;
 
       double angle = std::atan(axis1[1] / axis1[0]);
 
-      cur_e.pose.orientation.x = std::cos(angle / 2);
-      cur_e.pose.orientation.y = std::sin(angle / 2);
-      cur_e.pose.orientation.z = 0;
-      cur_e.pose.orientation.w = 0;
+      ellipse.markers[i].pose.orientation.x = std::cos(angle / 2);
+      ellipse.markers[i].pose.orientation.y = std::sin(angle / 2);
+      ellipse.markers[i].pose.orientation.z = 0;
+      ellipse.markers[i].pose.orientation.w = 0;
 
       //draw ellipse 
-      cur_e.pose.position.x = p.x;
-      cur_e.pose.position.y = p.y;
-      cur_e.pose.position.z = 0;
+      ellipse.markers[i].pose.position.x = p.x;
+      ellipse.markers[i].pose.position.y = p.y;
+      ellipse.markers[i].pose.position.z = 0;
 
 
       // Set the scale of the marker -- 1x1x1 here means 1m on a side
-      cur_e.scale.x = axis1.norm();
-      cur_e.scale.y = axis2.norm();
-      cur_e.scale.z = 0;
+      ellipse.markers[i].scale.x = 500*axis1.norm();  //TODO 500
+      ellipse.markers[i].scale.y = 500*axis2.norm();  //TODO 500
+      ellipse.markers[i].scale.z = 0;
 
-      cur_e.color.r = 0.0f;
-      cur_e.color.g = 1.0f;
-      cur_e.color.b = 0.0f;
-      cur_e.color.a = 1.0;
+      ellipse.markers[i].color.r = 0.0f;
+      ellipse.markers[i].color.g = 1.0f;
+      ellipse.markers[i].color.b = 0.0f;
+      ellipse.markers[i].color.a = 1.0;
 
-      marker_pub5.publish(cur_e);
     }
+    marker_pub4.publish(points4);
+    marker_pub5.publish(ellipse);
   }
 }
 
@@ -173,7 +175,7 @@ int main(int argc, char** argv)
   marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 10);
   marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 10);
   //ellipse
-  marker_pub5 = n.advertise<visualization_msgs::Marker>("visualization_marker5", 10);
+  marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
   cout << "aaa" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 1000, publishMsg_callback);
 
@@ -212,8 +214,8 @@ int main(int argc, char** argv)
   points4.scale.x = 0.1;
   points4.scale.y = 0.1;
 
-  points4.color.b = 0.5f;
-  points4.color.r = 0.5;
+  points4.color.r = 0.8f;
+  points4.color.a = 0.5;
 
 
   for (int i = 0; i < landmark_groundtruth.size(); i++)
