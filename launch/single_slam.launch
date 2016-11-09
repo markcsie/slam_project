@@ -1,5 +1,5 @@
 <launch>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(env HOME)/Desktop/slam.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find slam_project)/launch/slam.rviz" />
   <node name="points_and_lines" pkg="slam_project" type="points_and_lines" output="screen"/>
   <node name="slam_runner_node" pkg="slam_project" type="slam_runner_node" >
     <rosparam command="load" file="$(find slam_project)/config/config.yaml" />

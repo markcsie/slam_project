@@ -108,7 +108,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
       p.y = subMsg.landmark_y[i];
       points4.points.push_back(p);
       marker_pub4.publish(points4);
-      cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_x[i] << endl;
+      cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_y[i] << endl;
 
       Eigen::MatrixXd cov(2, 2);
       cov(0, 0) = subMsg.landmark_cov[i].data[0];
