@@ -81,6 +81,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
     k++;
     p.x = robot_groundtruth[k].x;
     p.y = robot_groundtruth[k].y;
+//    points.points.clear();  //TODO
     points.points.push_back(p);
     marker_pub.publish(points);
 
@@ -92,6 +93,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
     p.x = subMsg.x;
     p.y = subMsg.y;
+//    points2.points.clear(); //TODO
     points2.points.push_back(p);
     marker_pub2.publish(points2);
     cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
@@ -179,7 +181,7 @@ int main(int argc, char** argv)
   cout << "aaa" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 1000, publishMsg_callback);
 
-  ros::Rate r(100);
+  ros::Rate r(10);
 
   float f = 0.0;
 
@@ -191,6 +193,11 @@ int main(int argc, char** argv)
   points4.pose.orientation.w = points3.pose.orientation.w = points2.pose.orientation.w = points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
 
   points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
+  
+  //lifetime
+  points.lifetime = ros::Duration();  // A value of ros::Duration() means never to auto-delete
+  points2.lifetime = ros::Duration();
+
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
