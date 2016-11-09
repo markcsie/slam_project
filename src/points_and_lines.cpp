@@ -13,8 +13,8 @@ ros::Publisher marker_pub;
 ros::Publisher marker_pub2;
 ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
-
-visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4;
+ros::Publisher marker_pub5;
+visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4, marker;
 
 void readGroundTruth()
 {
@@ -112,12 +112,14 @@ int main(int argc, char** argv)
   readGroundTruth();
   readlandmarkGroundTruth();
   ros::init(argc, argv, "points_and_lines");
+
   ros::NodeHandle n;
   marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
   marker_pub2 = n.advertise<visualization_msgs::Marker>("visualization_marker2", 10);
   marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 10);
   marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 10);
-
+  //ellipse
+  marker_pub5 = n.advertise<visualization_msgs::Marker>("visualization_marker5", 10);
   cout << "aaa" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 1000, publishMsg_callback);
   cout << new_robot_groundtruth.size() << endl;
@@ -127,14 +129,14 @@ int main(int argc, char** argv)
   float f = 0.0;
 
   //  visualization_msgs::Marker points, line_strip, line_list, arrow, points2;
-  points4.header.frame_id = points3.header.frame_id = points2.header.frame_id = points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
-  points4.header.stamp = points3.header.stamp = points2.header.stamp = points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
-  points4.ns = points3.ns = points2.ns = points.ns = line_strip.ns = line_list.ns = "points_and_lines";
+  marker.header.frame_id = points4.header.frame_id = points3.header.frame_id = points2.header.frame_id = points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
+  marker.header.stamp = points4.header.stamp = points3.header.stamp = points2.header.stamp = points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
+  marker.ns = points4.ns = points3.ns = points2.ns = points.ns = line_strip.ns = line_list.ns = "points_and_lines";
   points4.action = points3.action = points2.action = points.action = line_strip.action = line_list.action = visualization_msgs::Marker::ADD;
   points4.pose.orientation.w = points3.pose.orientation.w = points2.pose.orientation.w = points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
 
   points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
-
+  marker.type = visualization_msgs::Marker::CYLINDER;
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
@@ -160,6 +162,28 @@ int main(int argc, char** argv)
 
   points4.color.b = 0.5f;
   points4.color.r = 0.5;
+
+  //draw ellipse 
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  marker.pose.position.z = 0;
+
+  double t = M_PI/3;
+  marker.pose.orientation.x = std::cos(t/2);
+  marker.pose.orientation.y = std::sin(t/2);
+  marker.pose.orientation.z = 0;
+  marker.pose.orientation.w = 0;
+
+  // Set the scale of the marker -- 1x1x1 here means 1m on a side
+  marker.scale.x = 2.0;
+  marker.scale.y = 1.0;
+  marker.scale.z = 0;
+  
+  marker.color.r = 0.0f;
+  marker.color.g = 1.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 1.0;
+
   for (int i = 0; i < landmark_groundtruth.size(); i++)
   {
     p.x = landmark_groundtruth[i].x;
@@ -168,9 +192,13 @@ int main(int argc, char** argv)
 
   }
 
+
+  cout<<M_PI<<endl;
+  cout<<std::atan(1)<<endl;
   while (ros::ok())
   {
     marker_pub3.publish(points3);
+    marker_pub5.publish(marker);
     ros::spinOnce();
     r.sleep();
   }

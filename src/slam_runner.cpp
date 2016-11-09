@@ -91,6 +91,12 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   cout << "map size: " << p.features_.size() << endl;
   for (auto n = p.features_.begin(); n != p.features_.end(); ++n)
   {
+    /*2*2 matrix 
+      n->second.covariance
+      calculate eigen value, eigen vector
+
+      filter nan value
+    */
     //  for( const auto& n : p.features_ ) {
     msg2.landmark_x[i] = n->second.mean_[0];
     cout << "*******" << n->second.mean_[0] << endl;
