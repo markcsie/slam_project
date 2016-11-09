@@ -18,7 +18,8 @@ ros::Publisher marker_pub2;
 ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
 ros::Publisher marker_pub5;
-visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4, marker;
+visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4;
+vector<visualization_msgs::Marker> ellipse;
 
 void readGroundTruth()
 {
@@ -97,9 +98,13 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
     for (int i = 0; i < len; i++)
     {
+
       p.x = subMsg.landmark_x[i];
       p.y = subMsg.landmark_y[i];
       
+      if (std::isnan(p.x) || std::isnan(p.y))
+        continue;
+
       for (size_t k = 0; k < subMsg.num; k++) {
         Eigen::MatrixXd cov(2, 2);
         cov(0, 0) = subMsg.landmark_cov[k].data[0];
@@ -112,6 +117,39 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
         Eigen::VectorXd axis1 = es.eigenvalues().real()[0] * es.eigenvectors().real().col(0);
         Eigen::VectorXd axis2 = es.eigenvalues().real()[1] * es.eigenvectors().real().col(1);
         // TODO: draw an ellipse with these two axes
+
+        visualization_msgs::Marker cur_e;
+        cur_e.header.frame_id="map";
+        cur_e.header.stamp = ros::Time::now();
+        cur_e.ns = "points_and_lines";
+        cur_e.action = visualization_msgs::Marker::ADD;
+        cur_e.type = visualization_msgs::Marker::CYLINDER;
+
+        double angle = std::atan(axis1[1]/axis1[0]);
+
+        cur_e.pose.orientation.x = std::cos(angle/2);
+        cur_e.pose.orientation.y = std::sin(angle/2);
+        cur_e.pose.orientation.z = 0;
+        cur_e.pose.orientation.w = 0;
+
+               //draw ellipse 
+        cur_e.pose.position.x = p.x;
+        cur_e.pose.position.y = p.y;
+        cur_e.pose.position.z = 0;
+
+       
+        // Set the scale of the marker -- 1x1x1 here means 1m on a side
+        cur_e.scale.x = axis1.norm();
+        cur_e.scale.y = axis2.norm();
+        cur_e.scale.z = 0;
+        
+        cur_e.color.r = 0.0f;
+        cur_e.color.g = 1.0f;
+        cur_e.color.b = 0.0f;
+        cur_e.color.a = 1.0;
+
+        marker_pub5.publish(cur_e);
+
       }
       
       points4.points.push_back(p);
@@ -125,6 +163,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
 
 }
+
 
 int main(int argc, char** argv)
 {
@@ -148,15 +187,14 @@ int main(int argc, char** argv)
   float f = 0.0;
 
   //  visualization_msgs::Marker points, line_strip, line_list, arrow, points2;
-  marker.header.frame_id = points4.header.frame_id = points3.header.frame_id = points2.header.frame_id = points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
-  marker.header.stamp = points4.header.stamp = points3.header.stamp = points2.header.stamp = points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
-  marker.ns = points4.ns = points3.ns = points2.ns = points.ns = line_strip.ns = line_list.ns = "points_and_lines";
+  points4.header.frame_id = points3.header.frame_id = points2.header.frame_id = points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
+  points4.header.stamp = points3.header.stamp = points2.header.stamp = points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
+  points4.ns = points3.ns = points2.ns = points.ns = line_strip.ns = line_list.ns = "points_and_lines";
   points4.action = points3.action = points2.action = points.action = line_strip.action = line_list.action = visualization_msgs::Marker::ADD;
   points4.pose.orientation.w = points3.pose.orientation.w = points2.pose.orientation.w = points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
 
   points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
-  marker.type = visualization_msgs::Marker::CYLINDER;
-  // POINTS markers use x and y scale for width/height respectively
+   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
 
@@ -182,26 +220,6 @@ int main(int argc, char** argv)
   points4.color.b = 0.5f;
   points4.color.r = 0.5;
 
-  //draw ellipse 
-  marker.pose.position.x = 0;
-  marker.pose.position.y = 0;
-  marker.pose.position.z = 0;
-
-  double t = M_PI/3;
-  marker.pose.orientation.x = std::cos(t/2);
-  marker.pose.orientation.y = std::sin(t/2);
-  marker.pose.orientation.z = 0;
-  marker.pose.orientation.w = 0;
-
-  // Set the scale of the marker -- 1x1x1 here means 1m on a side
-  marker.scale.x = 2.0;
-  marker.scale.y = 1.0;
-  marker.scale.z = 0;
-  
-  marker.color.r = 0.0f;
-  marker.color.g = 1.0f;
-  marker.color.b = 0.0f;
-  marker.color.a = 1.0;
 
   for (int i = 0; i < landmark_groundtruth.size(); i++)
   {
@@ -217,7 +235,6 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
     marker_pub3.publish(points3);
-    marker_pub5.publish(marker);
     ros::spinOnce();
     r.sleep();
   }

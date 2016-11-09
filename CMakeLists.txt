@@ -7,6 +7,7 @@ find_package(catkin REQUIRED
   std_msgs 
   message_generation
   roslib
+  genmsg
 )
 
 find_package(Eigen3 REQUIRED)
@@ -95,3 +96,7 @@ target_link_libraries(slam_runner_node
 
 add_executable(basic_shapes src/basic_shapes.cpp)
 target_link_libraries(basic_shapes ${catkin_LIBRARIES})
+
+add_dependencies(points_and_lines slam_project_generate_messages_cpp)
+add_dependencies(data_reader_node slam_project_generate_messages_cpp)
+add_dependencies(slam_runner_node slam_project_generate_messages_cpp)
