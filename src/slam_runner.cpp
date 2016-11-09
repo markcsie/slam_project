@@ -108,8 +108,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     cout << "*******" << n->second.mean_[0] << endl;
     msg2.landmark_y[i] = n->second.mean_[1];
 
-    msg2.landmark_cov[i].layout.dim.resize(2);
     msg2.landmark_cov[i].layout.dim.clear();
+    msg2.landmark_cov[i].layout.dim.resize(2);
     msg2.landmark_cov[i].layout.dim[0].label = "row";
     msg2.landmark_cov[i].layout.dim[0].size = 2;
     msg2.landmark_cov[i].layout.dim[0].stride = 4;
@@ -117,6 +117,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     msg2.landmark_cov[i].layout.dim[1].size = 2;
     msg2.landmark_cov[i].layout.dim[1].stride = 2;
     msg2.landmark_cov[i].layout.data_offset = 0;
+    msg2.landmark_cov[i].data.clear();
+    msg2.landmark_cov[i].data.resize(4);
     msg2.landmark_cov[i].data[0] = n->second.covariance_(0, 0);
     msg2.landmark_cov[i].data[1] = n->second.covariance_(0, 1);
     msg2.landmark_cov[i].data[2] = n->second.covariance_(1, 0);
