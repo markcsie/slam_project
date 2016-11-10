@@ -81,8 +81,9 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
     k++;
     p.x = robot_groundtruth[k].x;
     p.y = robot_groundtruth[k].y;
-//    points.points.clear();  //TODO
+    points.points.clear();     
     points.points.push_back(p);
+    points.id = k;
     marker_pub.publish(points);
 
 //    cout << "ggg ************** robot_groundtruth[k] x y " << robot_groundtruth[k].x << " " << robot_groundtruth[k].y << endl;
@@ -93,7 +94,9 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
     p.x = subMsg.x;
     p.y = subMsg.y;
+    points2.points.clear();
     points2.points.push_back(p);
+    points2.id = k;
     marker_pub2.publish(points2);
     cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
 
