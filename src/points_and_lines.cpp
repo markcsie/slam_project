@@ -93,14 +93,18 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
     p.x = subMsg.x;
     p.y = subMsg.y;
-//    points2.points.clear(); //TODO
     points2.points.push_back(p);
     marker_pub2.publish(points2);
     cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
 
     int len = subMsg.num;
     cout << "*******" << subMsg.num << endl;
-    ellipse.markers.resize(len);
+    int valid_len = 0, valid_i=0;
+    for (int i=0; i<len; i++)
+      if (!std::isnan(subMsg.landmark_x[i] && !std::isnan(subMsg.landmark_y[i]) ))
+        valid_len ++;
+
+    ellipse.markers.resize(valid_len);
     for (int i = 0; i < len; i++)
     {
       if (std::isnan(subMsg.landmark_x[i]) || std::isnan(subMsg.landmark_y[i]))
@@ -119,47 +123,54 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
       cov(0, 1) = subMsg.landmark_cov[i].data[1];
       cov(1, 0) = subMsg.landmark_cov[i].data[2];
       cov(1, 1) = subMsg.landmark_cov[i].data[3];
-      std::cout << "ggg cov " << std::endl;
-      std::cout << cov << std::endl;
+   //TODO   std::cout << "ggg cov " << std::endl;
+   //TODO   std::cout << cov << std::endl;
 
       Eigen::EigenSolver<Eigen::MatrixXd> es(cov);
 
-      std::cout << "ggg" << std::endl;
+   //TODO   std::cout << "ggg" << std::endl;
       Eigen::VectorXd axis1 = es.eigenvalues().real()[0] * es.eigenvectors().real().col(0);
       Eigen::VectorXd axis2 = es.eigenvalues().real()[1] * es.eigenvectors().real().col(1);
-      std::cout << "ggg" << std::endl;
+   //TODO   std::cout << "ggg" << std::endl;
       // TODO: draw an ellipse with these two axes
 
-      ellipse.markers[i].header.frame_id = "map";
-      ellipse.markers[i].header.stamp = ros::Time::now();
-      ellipse.markers[i].ns = "points_and_lines";
-      ellipse.markers[i].action = visualization_msgs::Marker::ADD;
-      ellipse.markers[i].type = visualization_msgs::Marker::CYLINDER;
+      ellipse.markers[valid_i].header.frame_id = "map";
+      ellipse.markers[valid_i].header.stamp = ros::Time::now();
+      ellipse.markers[valid_i].ns = "points_and_lines";
+      ellipse.markers[valid_i].action = visualization_msgs::Marker::ADD;
+      ellipse.markers[valid_i].type = visualization_msgs::Marker::CYLINDER;
 
       double angle = std::atan(axis1[1] / axis1[0]);
 
-      ellipse.markers[i].pose.orientation.x = std::cos(angle / 2);
-      ellipse.markers[i].pose.orientation.y = std::sin(angle / 2);
-      ellipse.markers[i].pose.orientation.z = 0;
-      ellipse.markers[i].pose.orientation.w = 0;
+      ellipse.markers[valid_i].pose.orientation.x = std::cos(angle / 2);
+      ellipse.markers[valid_i].pose.orientation.y = std::sin(angle / 2);
+      ellipse.markers[valid_i].pose.orientation.z = 0;
+      ellipse.markers[valid_i].pose.orientation.w = 0;
 
       //draw ellipse 
-      ellipse.markers[i].pose.position.x = p.x;
-      ellipse.markers[i].pose.position.y = p.y;
-      ellipse.markers[i].pose.position.z = 0;
+      ellipse.markers[valid_i].pose.position.x = p.x;
+      ellipse.markers[valid_i].pose.position.y = p.y;
+      ellipse.markers[valid_i].pose.position.z = 0;
 
 
       // Set the scale of the marker -- 1x1x1 here means 1m on a side
-      ellipse.markers[i].scale.x = 500*axis1.norm();  //TODO 500
-      ellipse.markers[i].scale.y = 500*axis2.norm();  //TODO 500
-      ellipse.markers[i].scale.z = 0;
+      ellipse.markers[valid_i].scale.x = 1000*axis1.norm();  //TODO 500
+      ellipse.markers[valid_i].scale.y = 1000*axis2.norm();  //TODO 500
+      ellipse.markers[valid_i].scale.z = 0;
 
-      ellipse.markers[i].color.r = 0.0f;
-      ellipse.markers[i].color.g = 1.0f;
-      ellipse.markers[i].color.b = 0.0f;
-      ellipse.markers[i].color.a = 1.0;
+      /*cout<<"valid id: "<<valid_i<<"lenght of axis1: "<<axis1.norm()<<endl;
+      cout<<"valid id: "<<valid_i<<"lenght of axis2: "<<axis2.norm()<<endl;*/
+      ellipse.markers[valid_i].color.r = 0.0f;
+      ellipse.markers[valid_i].color.g = 1.0f;
+      ellipse.markers[valid_i].color.b = 0.0f;
+      ellipse.markers[valid_i].color.a = 1.0;
+      
+      ellipse.markers[valid_i].id = valid_i; //must add id, or there will be only one marker
+      valid_i++;
 
     }
+
+
     marker_pub4.publish(points4);
     marker_pub5.publish(ellipse);
   }
