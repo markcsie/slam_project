@@ -7,6 +7,13 @@
 
 #include <Eigen/Eigenvalues> 
 
+/*
+points: robot groundtruth
+points2: slam robot groundtruth
+points3: landmark groundtruth
+points4: slam landmark groundtruth
+ellipse: particle ellipse
+*/
 
 vector<groundtruth> robot_groundtruth;
 vector<landmark> landmark_groundtruth;
@@ -117,7 +124,9 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
       p.x = subMsg.landmark_x[i];
       p.y = subMsg.landmark_y[i];
+      points4.points.clear();
       points4.points.push_back(p);
+      points4.id = k*20+i;
 //      marker_pub4.publish(points4);
       cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_y[i] << endl;
 
