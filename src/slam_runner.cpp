@@ -10,14 +10,15 @@
 #include "std_msgs/Float64MultiArray.h"
 #include "../include/data_reader.h"
 
+#include "../include/utils/eigenmvn.h"
+
 //global variable
 vector<groundtruth> robot_groundtruth;
-groundtruth g_cur;
 
 class SlamRunner
 {
 public:
-  SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
+  SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
@@ -31,8 +32,8 @@ private:
   size_t frame_count_;
 };
 
-SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map)
-: fast_slam2_(num_particles, initial_x, initial_w, robot, map), frame_count_(0)
+SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map)
+: fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robot, map), frame_count_(0)
 {
 }
 
@@ -53,8 +54,6 @@ Particle SlamRunner::getParticle(const size_t &i)
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
 {
   frame_count_++;
-  // TODO: process the message and run the slam algorithm
-  //  fast_slam2.process()
   Eigen::VectorXd u(2);
   u[0] = msg.forward_velocity;
   u[1] = msg.angular_velocity;
@@ -76,11 +75,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   fast_slam2_.process(u, z);
 
   Particle p = fast_slam2_.getParticle(0);
-  // TODO: publish for visualization
-  // p.x_
-  g_cur.x = p.x_[0];
-  g_cur.y = p.x_[1];
-  //  cout<<g_cur.x<<" "<<g_cur.y<<endl;
+  cout << "ggg posterior " << p.x_[0] << " " << p.x_[1] << endl;
   msg2.x = p.x_[0];
   msg2.y = p.x_[1];
 
@@ -105,8 +100,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     */
     //  for( const auto& n : p.features_ ) {
     msg2.landmark_x[i] = n->second.mean_[0];
-    cout << "*******" << n->second.mean_[0] << endl;
     msg2.landmark_y[i] = n->second.mean_[1];
+//    cout << "ggg ******* landmark " << n->second.mean_[0] << " " << n->second.mean_[1] << endl;
 
     msg2.landmark_cov[i].layout.dim.clear();
     msg2.landmark_cov[i].layout.dim.resize(2);
@@ -123,6 +118,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     msg2.landmark_cov[i].data[1] = n->second.covariance_(0, 1);
     msg2.landmark_cov[i].data[2] = n->second.covariance_(1, 0);
     msg2.landmark_cov[i].data[3] = n->second.covariance_(1, 1);
+//    std::cout << "ggg ******* landmark cov " << std::endl;
+//    std::cout << n->second.covariance_ << std::endl;
 
     i++;
   }
@@ -132,6 +129,64 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
 
 int main(int argc, char **argv)
 {
+  // =============testing  code
+  // test sampleGaussian
+  std::vector<double> gaussian_samples;
+  for (size_t i = 0; i < 10000; i++)
+  {
+    gaussian_samples.push_back(Utils::sampleGaussian(10, 5));
+//    std::cout << gaussian_samples[i] << std::endl;
+  }
+  double gaussian_sum = std::accumulate(gaussian_samples.begin(), gaussian_samples.end(), 0.0);
+  double gaussian_mean = gaussian_sum / gaussian_samples.size();
+  std::cout << "gaussian_mean " << gaussian_mean << std::endl;
+
+  double gaussian_sq_sum = std::inner_product(gaussian_samples.begin(), gaussian_samples.end(), gaussian_samples.begin(), 0.0);
+  double gaussian_var = gaussian_sq_sum / gaussian_samples.size() - gaussian_mean * gaussian_mean;
+  double gaussian_stdev = std::sqrt(gaussian_var);
+  std::cout << "gaussian_var " << gaussian_var << std::endl;
+  std::cout << "gaussian_stdev " << gaussian_stdev << std::endl;
+  
+  // test sampleUniform
+  std::vector<double> uniform_samples;
+  for (size_t i = 0; i < 10000; i++)
+  {
+    uniform_samples.push_back(Utils::sampleUniform(5, 15));
+//    std::cout << uniform_samples[i] << std::endl;
+  }
+  double uniform_sum = std::accumulate(uniform_samples.begin(), uniform_samples.end(), 0.0);
+  double uniform_mean = uniform_sum / uniform_samples.size();
+  std::cout << "uniform_mean " << uniform_mean << std::endl;
+  std::cout << "uniform_max " << *std::max_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
+  std::cout << "uniform_min " << *std::min_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
+  
+  // test Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
+  Eigen::MatrixXd mvn_samples(20000, 3);
+  Eigen::VectorXd mvn_mean(3);
+  mvn_mean << 1, 2, 3;
+  Eigen::MatrixXd mvn_covariance(3, 3);
+  mvn_covariance << 1, 2, 3,
+                    2, 5, 6,
+                    3, 6, 9;
+  
+  for (size_t i = 0; i < mvn_samples.rows(); i++)
+  {
+    Eigen::EigenMultivariateNormal<double> norm(mvn_mean, mvn_covariance);
+    mvn_samples.row(i) = norm.samples(1).transpose();
+  }
+  Eigen::VectorXd mvn_sum(3);
+  mvn_sum << 0, 0, 0;
+  for (size_t i = 0; i < mvn_samples.rows(); i++) {
+    mvn_sum += mvn_samples.row(i).transpose();
+  }
+  Eigen::VectorXd sample_mvn_mean = mvn_sum / mvn_samples.rows();
+  std::cout << "sample_mvn_mean " << sample_mvn_mean.transpose() << std::endl;
+  Eigen::MatrixXd sample_mvn_cov = (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose()).transpose() * (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose());
+  sample_mvn_cov = sample_mvn_cov / (mvn_samples.rows() - 1);
+  std::cout << "sample_mvn_cov " << std::endl;
+  std::cout << sample_mvn_cov << std::endl;
+  //
+  
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
@@ -156,7 +211,7 @@ int main(int argc, char **argv)
   FeatureMap2dModel map(map_size, map_corner);
 
   std::vector<double> measurement_noise;
-  node.param("slam/measurement_noise", measurement_noise,{1.0, 1.0});
+  node.param("slam/measurement_noise", measurement_noise, {1.0, 1.0});
   Eigen::MatrixXd Q_t(2, 2);
   Q_t << measurement_noise[0], 0.0,
           0.0, measurement_noise[1];
@@ -171,9 +226,13 @@ int main(int argc, char **argv)
 
   Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x << 1.916028, -2.676211, 0.390500;
-  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_w, robot, map); // TODO: dimension depends on the incoming data
+  Eigen::MatrixXd initial_cov(3, 3); // TODO: parameter or random?
+  initial_cov << 0.000001, 0, 0,
+                 0, 0.000001, 0,
+                 0, 0, 0.000001;
+  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_cov, initial_w, robot, map); // TODO: dimension depends on the incoming data
 
-  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100, &SlamRunner::frameCallback, &slam_runner);
+  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 500, &SlamRunner::frameCallback, &slam_runner);
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
 
   int i = 0;

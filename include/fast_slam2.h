@@ -18,6 +18,7 @@ struct Gaussian
 struct Particle
 {
   Eigen::VectorXd x_;
+  Eigen::MatrixXd cov_; // Cov of proposal distribution
   std::unordered_map<int, Gaussian> features_; // key = subject # value Gaussian(mean, covariance)
   double w_; // importance weight
 };
@@ -25,7 +26,7 @@ struct Particle
 class FastSlam2
 {
 public:
-  FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
+  FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 
@@ -42,7 +43,7 @@ private:
 
   Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 
-  Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
+  Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u, const Eigen::MatrixXd &cov) const;
   Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)const;

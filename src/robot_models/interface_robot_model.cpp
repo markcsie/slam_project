@@ -14,9 +14,9 @@ const Eigen::MatrixXd &RobotModelInterface::getQt() const
   return measurement_model_->getQt();
 };
 
-Eigen::MatrixXd RobotModelInterface::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
+Eigen::MatrixXd RobotModelInterface::calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u, const Eigen::MatrixXd &cov) const
 {
-  return motion_model_->calculateRt(this->shared_from_this(), x, u);
+  return motion_model_->calculateRt(this->shared_from_this(), x, u, cov);
 };
 
 Eigen::VectorXd RobotModelInterface::predictPose(const Eigen::VectorXd& x, const Eigen::VectorXd& u) const

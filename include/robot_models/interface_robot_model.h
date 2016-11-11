@@ -18,7 +18,7 @@ class RobotModelInterface : public std::enable_shared_from_this<RobotModelInterf
 public:
   virtual ~RobotModelInterface();
   
-  virtual Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
+  virtual Eigen::MatrixXd calculateRt(const Eigen::VectorXd &x, const Eigen::VectorXd &u, const Eigen::MatrixXd &cov) const;
   virtual Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd predictPose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
   virtual Eigen::VectorXd predictMeasurement(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
