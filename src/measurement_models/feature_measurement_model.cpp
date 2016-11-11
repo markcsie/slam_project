@@ -86,6 +86,9 @@ Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<cons
 {
   Eigen::MatrixXd H_x(dim_, robot_model->getDim());
   double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);
+  std::cout << "ggg mean " << mean.transpose() << std::endl;
+  std::cout << "ggg x " << x.transpose() << std::endl;
+  assert(q > 0);
   H_x << -(mean[0] - x[0]) / std::sqrt(q), -(mean[1] - x[1]) / std::sqrt(q), 0,
           (mean[1] - x[1]) / q, -(mean[0] - x[0]) / q, -1;
   return H_x;
@@ -95,6 +98,9 @@ Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const std::shared_ptr<c
 {
   Eigen::MatrixXd H_m(dim_, map_model->getDim());
   double q = std::pow(mean[0] - x[0], 2) + std::pow(mean[1] - x[1], 2);
+  std::cout << "ggg mean " << mean.transpose() << std::endl;
+  std::cout << "ggg x " << x.transpose() << std::endl;
+  assert(q > 0);
   H_m << (mean[0] - x[0]) / std::sqrt(q), (mean[1] - x[1]) / std::sqrt(q),
           -(mean[1] - x[1]) / q, (mean[0] - x[0]) / q;
   return H_m;

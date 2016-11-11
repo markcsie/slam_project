@@ -50,6 +50,8 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Robo
 Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u) const
 {
   Eigen::MatrixXd V_t(robot_model->getDim(), dim_);
+  std::cout << "ggg u[1] " << u[1] << std::endl;
+  assert(u[1] > 0);
   V_t(0, 0) = (-std::sin(x[2]) + std::sin(x[2] + u[1] * delta_t_)) / u[1];
   V_t(0, 1) = u[0] * ((std::sin(x[2]) - std::sin(x[2] + u[1] * delta_t_)) / std::pow(u[1], 2) + (std::cos(x[2] + u[1] * delta_t_) * delta_t_) / u[1]);
   V_t(1, 0) = (std::cos(x[2]) - std::cos(x[2] + u[1] * delta_t_)) / u[1];
