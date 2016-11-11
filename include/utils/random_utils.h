@@ -8,7 +8,7 @@ namespace Utils
 
   inline double sampleGaussian(const double &mean, const double &variance)
   {
-    std::normal_distribution<double> distribution(mean, variance);
+    std::normal_distribution<double> distribution(mean, std::sqrt(variance));
     return distribution(generator);
   }
 
