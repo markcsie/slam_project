@@ -105,7 +105,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
     points2.points.push_back(p);
     points2.id = k;
     marker_pub2.publish(points2);
-    cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
+//    cout << "ggg ************** subMsg x y " << subMsg.x << " " << subMsg.y << endl;
 
     int len = subMsg.num;
     cout << "*******" << subMsg.num << endl;
@@ -166,8 +166,8 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth& subMsg)
 
 
       // Set the scale of the marker -- 1x1x1 here means 1m on a side
-      ellipse.markers[valid_i].scale.x = 1000*axis1.norm();  //TODO 500
-      ellipse.markers[valid_i].scale.y = 1000*axis2.norm();  //TODO 500
+      ellipse.markers[valid_i].scale.x = axis1.norm();  //TODO 500
+      ellipse.markers[valid_i].scale.y = axis2.norm();  //TODO 500
       ellipse.markers[valid_i].scale.z = 0;
 
       /*cout<<"valid id: "<<valid_i<<"lenght of axis1: "<<axis1.norm()<<endl;
