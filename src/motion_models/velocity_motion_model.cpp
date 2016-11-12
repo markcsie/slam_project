@@ -49,7 +49,7 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Robo
 
 Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const Eigen::VectorXd& x, const Eigen::VectorXd& u, const Eigen::MatrixXd &cov) const
 {
-  std::cout << "ggg u[1] " << u[1] << std::endl;
+//  std::cout << "ggg u[1] " << u[1] << std::endl;
   
   Eigen::MatrixXd G_t(robot_model->getDim(), robot_model->getDim());
   if (u[1] == 0)
@@ -83,14 +83,14 @@ Eigen::MatrixXd VelocityMotionModel::calculateRt(const std::shared_ptr<const Mob
     V_t(2, 1) = delta_t_;
   }
 
-  std::cout << "ggg V_t \n" << V_t << std::endl;
+//  std::cout << "ggg V_t \n" << V_t << std::endl;
 
   Eigen::MatrixXd M_t(dim_, dim_);
   M_t << alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2), 0,
           0, alphas_[2] * std::pow(u[0], 2) + alphas_[3] * std::pow(u[1], 2);
   
-  std::cout << "ggg M_t" << std::endl << M_t << std::endl;
-  std::cout << "ggg cov" << std::endl << cov << std::endl;
+//  std::cout << "ggg M_t" << std::endl << M_t << std::endl;
+//  std::cout << "ggg cov" << std::endl << cov << std::endl;
   
   return G_t * cov * G_t.transpose() + V_t * M_t * V_t.transpose();
 };

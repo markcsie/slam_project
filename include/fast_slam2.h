@@ -30,6 +30,8 @@ public:
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 
+  size_t getNumParticles();
+  std::vector<Particle> getParticles();
   Particle getParticle(const size_t &i);
   void process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
 private:

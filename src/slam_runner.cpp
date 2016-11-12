@@ -22,7 +22,6 @@ public:
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
-  Particle getParticle(const size_t &i);
   ros::Publisher dataPublisher;
   slam_project::Robot_GroundTruth msg2;
   void frameCallback(const slam_project::Robot_Odometry &msg);
@@ -44,11 +43,6 @@ SlamRunner::SlamRunner(const SlamRunner& other)
 
 SlamRunner::~SlamRunner()
 {
-}
-
-Particle SlamRunner::getParticle(const size_t &i)
-{
-  return fast_slam2_.getParticle(i);
 }
 
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
@@ -74,12 +68,49 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   std::cout << "ggg frame " << frame_count_ << std::endl;
   fast_slam2_.process(u, z);
 
-  Particle p = fast_slam2_.getParticle(0);
-  cout << "ggg posterior " << p.x_[0] << " " << p.x_[1] << endl;
-  msg2.x = p.x_[0];
-  msg2.y = p.x_[1];
+  Eigen::VectorXd average_x(3);
+  average_x << 0, 0, 0;
+  std::unordered_map<int, Eigen::VectorXd> features_average_x;
+  std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
+  for (const Particle &p : fast_slam2_.getParticles())
+  {
+//    std::cout << "p.x_ " << p.x_ << std::endl;
+    average_x += p.x_;
+    for (auto it = p.features_.begin(); it != p.features_.end(); ++it)
+    {
+      if (features_average_x.find(it->first) == features_average_x.end())
+      {
+        features_average_x[it->first] = it->second.mean_;
+      }
+      else
+      {
+        features_average_x[it->first] += it->second.mean_;
+      }
+    }
+  }
+  average_x /= fast_slam2_.getNumParticles();
 
-  msg2.num = p.features_.size(); //TODO
+  for (auto it = features_average_x.begin(); it != features_average_x.end(); ++it)
+  {
+    features_average_x[it->first] /= fast_slam2_.getNumParticles();
+    Eigen::MatrixXd particles_matrix(fast_slam2_.getNumParticles(), 2);
+    size_t i = 0;
+    for (Particle p : fast_slam2_.getParticles())
+    {
+      particles_matrix.row(i) = p.features_[it->first].mean_.transpose();
+      i++;
+    }
+    Eigen::MatrixXd temp = particles_matrix - Eigen::VectorXd::Ones(particles_matrix.rows(), 1) * features_average_x[it->first].transpose();
+    features_average_cov[it->first] = temp.transpose() * temp;
+    features_average_cov[it->first] /= (particles_matrix.rows() - 1);
+  }
+    
+  cout << "ggg average posterior " << average_x[0] << " " << average_x[1] << " " << average_x[2] << endl;
+  
+  msg2.x = average_x[0];
+  msg2.y = average_x[1];
+
+  msg2.num = features_average_x.size(); //TODO
   msg2.landmark_x.clear();
   msg2.landmark_y.clear();
   msg2.landmark_cov.clear();
@@ -89,8 +120,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   msg2.landmark_cov.resize(msg2.num);
 
   int i = 0;
-  cout << "map size: " << p.features_.size() << endl;
-  for (auto n = p.features_.begin(); n != p.features_.end(); ++n)
+//  cout << "map size: " << average_features.size() << endl;
+  for (auto n = features_average_x.begin(); n != features_average_x.end(); ++n)
   {
     /*2*2 matrix 
       n->second.covariance
@@ -99,8 +130,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
       filter nan value
     */
     //  for( const auto& n : p.features_ ) {
-    msg2.landmark_x[i] = n->second.mean_[0];
-    msg2.landmark_y[i] = n->second.mean_[1];
+    msg2.landmark_x[i] = n->second[0];
+    msg2.landmark_y[i] = n->second[1];
 //    cout << "ggg ******* landmark " << n->second.mean_[0] << " " << n->second.mean_[1] << endl;
 
     msg2.landmark_cov[i].layout.dim.clear();
@@ -114,10 +145,10 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     msg2.landmark_cov[i].layout.data_offset = 0;
     msg2.landmark_cov[i].data.clear();
     msg2.landmark_cov[i].data.resize(4);
-    msg2.landmark_cov[i].data[0] = n->second.covariance_(0, 0);
-    msg2.landmark_cov[i].data[1] = n->second.covariance_(0, 1);
-    msg2.landmark_cov[i].data[2] = n->second.covariance_(1, 0);
-    msg2.landmark_cov[i].data[3] = n->second.covariance_(1, 1);
+    msg2.landmark_cov[i].data[0] = features_average_cov[n->first](0, 0);
+    msg2.landmark_cov[i].data[1] = features_average_cov[n->first](0, 1);
+    msg2.landmark_cov[i].data[2] = features_average_cov[n->first](1, 0);
+    msg2.landmark_cov[i].data[3] = features_average_cov[n->first](1, 1);
 //    std::cout << "ggg ******* landmark cov " << std::endl;
 //    std::cout << n->second.covariance_ << std::endl;
 
@@ -131,61 +162,61 @@ int main(int argc, char **argv)
 {
   // =============testing  code
   // test sampleGaussian
-  std::vector<double> gaussian_samples;
-  for (size_t i = 0; i < 10000; i++)
-  {
-    gaussian_samples.push_back(Utils::sampleGaussian(10, 5));
-//    std::cout << gaussian_samples[i] << std::endl;
-  }
-  double gaussian_sum = std::accumulate(gaussian_samples.begin(), gaussian_samples.end(), 0.0);
-  double gaussian_mean = gaussian_sum / gaussian_samples.size();
-  std::cout << "gaussian_mean " << gaussian_mean << std::endl;
-
-  double gaussian_sq_sum = std::inner_product(gaussian_samples.begin(), gaussian_samples.end(), gaussian_samples.begin(), 0.0);
-  double gaussian_var = gaussian_sq_sum / gaussian_samples.size() - gaussian_mean * gaussian_mean;
-  double gaussian_stdev = std::sqrt(gaussian_var);
-  std::cout << "gaussian_var " << gaussian_var << std::endl;
-  std::cout << "gaussian_stdev " << gaussian_stdev << std::endl;
-  
-  // test sampleUniform
-  std::vector<double> uniform_samples;
-  for (size_t i = 0; i < 10000; i++)
-  {
-    uniform_samples.push_back(Utils::sampleUniform(5, 15));
-//    std::cout << uniform_samples[i] << std::endl;
-  }
-  double uniform_sum = std::accumulate(uniform_samples.begin(), uniform_samples.end(), 0.0);
-  double uniform_mean = uniform_sum / uniform_samples.size();
-  std::cout << "uniform_mean " << uniform_mean << std::endl;
-  std::cout << "uniform_max " << *std::max_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
-  std::cout << "uniform_min " << *std::min_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
-  
-  // test Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
-  Eigen::MatrixXd mvn_samples(20000, 3);
-  Eigen::VectorXd mvn_mean(3);
-  mvn_mean << 1, 2, 3;
-  Eigen::MatrixXd mvn_covariance(3, 3);
-  mvn_covariance << 1, 2, 3,
-                    2, 5, 6,
-                    3, 6, 9;
-  
-  for (size_t i = 0; i < mvn_samples.rows(); i++)
-  {
-    Eigen::EigenMultivariateNormal<double> norm(mvn_mean, mvn_covariance);
-    mvn_samples.row(i) = norm.samples(1).transpose();
-  }
-  Eigen::VectorXd mvn_sum(3);
-  mvn_sum << 0, 0, 0;
-  for (size_t i = 0; i < mvn_samples.rows(); i++) {
-    mvn_sum += mvn_samples.row(i).transpose();
-  }
-  Eigen::VectorXd sample_mvn_mean = mvn_sum / mvn_samples.rows();
-  std::cout << "sample_mvn_mean " << sample_mvn_mean.transpose() << std::endl;
-  Eigen::MatrixXd sample_mvn_cov = (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose()).transpose() * (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose());
-  sample_mvn_cov = sample_mvn_cov / (mvn_samples.rows() - 1);
-  std::cout << "sample_mvn_cov " << std::endl;
-  std::cout << sample_mvn_cov << std::endl;
-  //
+//  std::vector<double> gaussian_samples;
+//  for (size_t i = 0; i < 10000; i++)
+//  {
+//    gaussian_samples.push_back(Utils::sampleGaussian(10, 5));
+////    std::cout << gaussian_samples[i] << std::endl;
+//  }
+//  double gaussian_sum = std::accumulate(gaussian_samples.begin(), gaussian_samples.end(), 0.0);
+//  double gaussian_mean = gaussian_sum / gaussian_samples.size();
+//  std::cout << "gaussian_mean " << gaussian_mean << std::endl;
+//
+//  double gaussian_sq_sum = std::inner_product(gaussian_samples.begin(), gaussian_samples.end(), gaussian_samples.begin(), 0.0);
+//  double gaussian_var = gaussian_sq_sum / gaussian_samples.size() - gaussian_mean * gaussian_mean;
+//  double gaussian_stdev = std::sqrt(gaussian_var);
+//  std::cout << "gaussian_var " << gaussian_var << std::endl;
+//  std::cout << "gaussian_stdev " << gaussian_stdev << std::endl;
+//  
+//  // test sampleUniform
+//  std::vector<double> uniform_samples;
+//  for (size_t i = 0; i < 10000; i++)
+//  {
+//    uniform_samples.push_back(Utils::sampleUniform(5, 15));
+////    std::cout << uniform_samples[i] << std::endl;
+//  }
+//  double uniform_sum = std::accumulate(uniform_samples.begin(), uniform_samples.end(), 0.0);
+//  double uniform_mean = uniform_sum / uniform_samples.size();
+//  std::cout << "uniform_mean " << uniform_mean << std::endl;
+//  std::cout << "uniform_max " << *std::max_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
+//  std::cout << "uniform_min " << *std::min_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
+//  
+//  // test Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
+//  Eigen::MatrixXd mvn_samples(20000, 3);
+//  Eigen::VectorXd mvn_mean(3);
+//  mvn_mean << 1, 2, 3;
+//  Eigen::MatrixXd mvn_covariance(3, 3);
+//  mvn_covariance << 1, 2, 3,
+//                    2, 5, 6,
+//                    3, 6, 9;
+//  
+//  for (size_t i = 0; i < mvn_samples.rows(); i++)
+//  {
+//    Eigen::EigenMultivariateNormal<double> norm(mvn_mean, mvn_covariance);
+//    mvn_samples.row(i) = norm.samples(1).transpose();
+//  }
+//  Eigen::VectorXd mvn_sum(3);
+//  mvn_sum << 0, 0, 0;
+//  for (size_t i = 0; i < mvn_samples.rows(); i++) {
+//    mvn_sum += mvn_samples.row(i).transpose();
+//  }
+//  Eigen::VectorXd sample_mvn_mean = mvn_sum / mvn_samples.rows();
+//  std::cout << "sample_mvn_mean " << sample_mvn_mean.transpose() << std::endl;
+//  Eigen::MatrixXd sample_mvn_cov = (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose()).transpose() * (mvn_samples - Eigen::VectorXd::Ones(mvn_samples.rows(), 1) * sample_mvn_mean.transpose());
+//  sample_mvn_cov = sample_mvn_cov / (mvn_samples.rows() - 1);
+//  std::cout << "sample_mvn_cov " << std::endl;
+//  std::cout << sample_mvn_cov << std::endl;
+  // =============
   
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
