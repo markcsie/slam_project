@@ -4,86 +4,53 @@
 
 #include "utils/eigenmvn.h"
 
-//MultiFastSlam::MultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
-//particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
-//{
-//  assert(initial_x.size() == num_particles);
-//  for (size_t i = 0; i < num_particles; i++)
-//  {
-//    particles_[i].x_ = initial_x[i];
-//    particles_[i].w_ = initial_w_;
-//    particles_[i].cov_ = initial_cov;
-//  }
-//
-//}
-//
-//MultiFastSlam::MultiFastSlam(const MultiFastSlam& other)
-//{
-//  // TODO:
-//}
-//
-//MultiFastSlam::~MultiFastSlam()
-//{
-//}
-//
-//size_t MultiFastSlam::getNumParticles() 
-//{
-//  return particles_.size();
-//}
-//
-//std::vector<Particle> MultiFastSlam::getParticles()
-//{
-//  return particles_;
-//}
-//
-//Particle MultiFastSlam::getParticle(const size_t &i)
-//{
-//  return particles_[i];
-//}
-//
-//void MultiFastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
-//{
-////  //  std::cout << "u: " << u.transpose() << std::endl;
-////  const size_t num_measurements = features.rows();
-////  if (num_measurements == 0 || dead_reckoning_)
-////  {
-////    for (Particle &p : particles_)
-////    {
-//////      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-////      p.x_ = samplePose(p.x_, u);
-//////      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-////    }
-////  }
-////  else
-////  {
-//////    std::cout << "ggg z: " << std::endl << features << std::endl;
-////    for (size_t i = 0; i < num_measurements; i++)
-////    {
-////      // implement the algorithm in Table 13.3
-////      for (Particle &p : particles_)
-////      {
-////        updateParticle(p, u, features.row(i));
-////        //  std::cout << "p.x_ " << p.x_.transpose() << std::endl;  //for debug
-////      }
-////      // resampling
-////      std::vector<double> weights(particles_.size());
-////      for (size_t i = 0; i < weights.size(); i++)
-////      {
-////        weights[i] = particles_[i].w_;
-////      }
-////      std::vector<Particle> new_particles(particles_.size());
-////      for (size_t i = 0; i < particles_.size(); i++)
-////      {
-////        new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
-//////        std::cout << "ggg Utils::sampleDiscrete(weights) " << Utils::sampleDiscrete(weights) << std::endl;
-////        //      std::cout << "ggg new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
-////      }
-////      particles_ = new_particles;
-//////      std::cout << "ggg particles_.size() " << particles_.size() << std::endl;
-////    }
-////  }
-//}
-//
+MultiFastSlam::MultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map) :
+particles_(num_particles), initial_w_(initial_w), map_(&map)
+{
+  for (const RobotModelInterface & r : robots)
+  {
+    robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
+  }
+  assert(initial_x.size() == robots_.size()); // TODO: this is different from single slam
+  for (size_t i = 0; i < num_particles; i++)
+  {
+    for (size_t j = 0; j < initial_x.size(); j++) {
+      particles_[i].x_[robots_[j]->getId()] = initial_x[j];
+    }
+    particles_[i].w_ = initial_w_;
+    particles_[i].cov_ = initial_cov;
+  }
+
+}
+
+MultiFastSlam::MultiFastSlam(const MultiFastSlam& other)
+{
+  // TODO:
+}
+
+MultiFastSlam::~MultiFastSlam()
+{
+}
+
+size_t MultiFastSlam::getNumParticles() 
+{
+  return particles_.size();
+}
+
+std::vector<MultiRobotParticle> MultiFastSlam::getParticles()
+{
+  return particles_;
+}
+
+MultiRobotParticle MultiFastSlam::getParticle(const size_t &i)
+{
+  return particles_[i];
+}
+
+void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
+{
+}
+
 //// TODO: check if z_t is after applying u_t????
 //void MultiFastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 //{
