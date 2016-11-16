@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 
+#include "fast_slam.h"
 #include "fast_slam2.h"
 
 #include "motion_models/velocity_motion_model.h"
@@ -27,17 +28,21 @@ public:
   void frameCallback(const slam_project::Robot_Odometry &msg);
 
 private:
-  FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
+  FastSlam fast_slam_; // TODO: polymorphism for SLAM algorithm?
+//  FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   size_t frame_count_;
 };
 
 SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, RobotModelInterface &robot, MapModelInterface &map)
-: fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robot, map), frame_count_(0)
+: 
+fast_slam_(num_particles, initial_x, initial_cov, initial_w, robot, map),
+//fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robot, map),
+frame_count_(0)
 {
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other)
-: fast_slam2_(other.fast_slam2_), frame_count_(other.frame_count_)
+: fast_slam_(other.fast_slam_), /*fast_slam2_(other.fast_slam2_), */frame_count_(other.frame_count_)
 {
 }
 
@@ -66,13 +71,14 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
   //  }  
   std::cout << "ggg frame " << frame_count_ << std::endl;
-  fast_slam2_.process(u, z);
+//  fast_slam2_.process(u, z);
+  fast_slam_.process(u, z);
 
   Eigen::VectorXd average_x(3);
   average_x << 0, 0, 0;
   std::unordered_map<int, Eigen::VectorXd> features_average_x;
   std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
-  for (const Particle &p : fast_slam2_.getParticles())
+  for (const Particle &p : fast_slam_.getParticles())
   {
 //    std::cout << "p.x_ " << p.x_ << std::endl;
     average_x += p.x_;
@@ -88,14 +94,14 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
       }
     }
   }
-  average_x /= fast_slam2_.getNumParticles();
+  average_x /= fast_slam_.getNumParticles();
 
   for (auto it = features_average_x.begin(); it != features_average_x.end(); ++it)
   {
-    features_average_x[it->first] /= fast_slam2_.getNumParticles();
-    Eigen::MatrixXd particles_matrix(fast_slam2_.getNumParticles(), 2);
+    features_average_x[it->first] /= fast_slam_.getNumParticles();
+    Eigen::MatrixXd particles_matrix(fast_slam_.getNumParticles(), 2);
     size_t i = 0;
-    for (Particle p : fast_slam2_.getParticles())
+    for (Particle p : fast_slam_.getParticles())
     {
       particles_matrix.row(i) = p.features_[it->first].mean_.transpose();
       i++;
@@ -105,7 +111,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     features_average_cov[it->first] /= (particles_matrix.rows() - 1);
   }
     
-  cout << "ggg average posterior " << average_x[0] << " " << average_x[1] << " " << average_x[2] << endl;
+//  cout << "ggg average posterior " << average_x[0] << " " << average_x[1] << " " << average_x[2] << endl;
   
   msg2.x = average_x[0];
   msg2.y = average_x[1];
@@ -221,7 +227,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
-  ros::Rate rate(100);
+  ros::Rate rate(50);
   ROS_INFO("start spinning");
 
   int num_particles;
@@ -263,7 +269,7 @@ int main(int argc, char **argv)
                  0, 0, 0.000001;
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_cov, initial_w, robot, map); // TODO: dimension depends on the incoming data
 
-  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 500, &SlamRunner::frameCallback, &slam_runner);
+  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 1000, &SlamRunner::frameCallback, &slam_runner);
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
 
   int i = 0;

@@ -57,7 +57,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &feature
   }
   else
   {
-    std::cout << "ggg z: " << std::endl << features << std::endl;
+//    std::cout << "ggg z: " << std::endl << features << std::endl;
     for (size_t i = 0; i < num_measurements; i++)
     {
       // implement the algorithm in Table 13.3
@@ -137,21 +137,21 @@ void FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eige
 {
   const int feature_id = feature[0];
   const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
-  std::cout << "ggg feature_id " << feature_id << std::endl;
-  std::cout << "ggg z " << z.transpose() << std::endl;
+//  std::cout << "ggg feature_id " << feature_id << std::endl;
+//  std::cout << "ggg z " << z.transpose() << std::endl;
   auto iter = p.features_.find(feature_id);
 
   if (iter == p.features_.end()) // first time seeing the feature, do initialization 
   {
-    std::cout << "ggg new feature_id: " << feature_id << std::endl;
+//    std::cout << "ggg new feature_id: " << feature_id << std::endl;
 
     p.x_ = samplePose(p.x_, u);
-    std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
+//    std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
     p.features_[feature_id].mean_ = inverseMeasurement(p.x_, z);
-    std::cout << "ggg p.features_[feature_id].mean_ " << p.features_[feature_id].mean_.transpose() << std::endl;
+//    std::cout << "ggg p.features_[feature_id].mean_ " << p.features_[feature_id].mean_.transpose() << std::endl;
     Eigen::MatrixXd H_m = jacobianFeature(p.features_[feature_id].mean_, p.x_);
     p.features_[feature_id].covariance_ = H_m.inverse() * robot_->getQt() * H_m.inverse().transpose();
-    std::cout << "ggg p.features_[feature_id].covariance_ \n" << p.features_[feature_id].covariance_ << std::endl;
+//    std::cout << "ggg p.features_[feature_id].covariance_ \n" << p.features_[feature_id].covariance_ << std::endl;
     p.w_ = initial_w_;
   }
   else

@@ -115,6 +115,7 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Mobi
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
   Eigen::VectorXd x_next(robot_model->getDim());
+//  std::cout << "ggg alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2) " << alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2) << std::endl;
   double v_hat = u[0] + Utils::sampleGaussian(0, alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2));
   double w_hat = u[1] + Utils::sampleGaussian(0, alphas_[2] * std::pow(u[0], 2) + alphas_[3] * std::pow(u[1], 2));
   double gamma_hat = Utils::sampleGaussian(0, alphas_[4] * std::pow(u[0], 2) + alphas_[5] * std::pow(u[1], 2));
