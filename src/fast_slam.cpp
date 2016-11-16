@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "utils/eigenmvn.h"
-
 FastSlam::FastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
 particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
 {
@@ -14,9 +12,6 @@ particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
     particles_[i].w_ = initial_w_;
     particles_[i].cov_ = initial_cov;
   }
-
-  // for debugging
-  dead_reckoning_ = false;
 }
 
 FastSlam::FastSlam(const FastSlam& other)
@@ -47,12 +42,13 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
 {
   //  std::cout << "u: " << u.transpose() << std::endl;
   const size_t num_measurements = features.rows();
-  if (num_measurements == 0 || dead_reckoning_)
+//  const size_t num_measurements = 0; // dead reckoning
+  if (num_measurements == 0)
   {
     for (Particle &p : particles_)
     {
 //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-      p.x_ = samplePose(p.x_, u);
+      p.x_ = robot_->samplePose(p.x_, u); // x_t ~ p(x_t| x_{t-1}, u_t)
 //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
     }
   }
@@ -86,29 +82,6 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
   }
 }
 
-Eigen::VectorXd FastSlam::samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const
-{
-  // x_t ~ p(x_t| x_{t-1}, u_t)
-  return robot_->samplePose(x, u);
-}
-
-Eigen::VectorXd FastSlam::predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const
-{
-  // h(mean_{t-1}, x)
-  return robot_->predictMeasurement(map_, mean, x);
-}
-
-Eigen::VectorXd FastSlam::inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z) const
-{
-  // mean_t = h^{-1}(x_t, z_t))
-  return robot_->inverseMeasurement(map_, x, z);
-}
-
-Eigen::MatrixXd FastSlam::jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const
-{
-  return robot_->jacobianFeature(map_, mean, x);
-}
-
 // TODO: check if z_t is after applying u_t????
 void FastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
@@ -117,20 +90,21 @@ void FastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen
   auto iter = p.features_.find(feature_id);
 
   std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-  p.x_ = samplePose(p.x_, u);
+  p.x_ = robot_->samplePose(p.x_, u); // x_t ~ p(x_t| x_{t-1}, u_t)
   std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
   
   if (iter == p.features_.end()) // first time seeing the feature, do initialization 
   {
-    p.features_[feature_id].mean_ = inverseMeasurement(p.x_, z);
-    Eigen::MatrixXd H = jacobianFeature(p.features_[feature_id].mean_, p.x_);
+    p.features_[feature_id].mean_ = robot_->inverseMeasurement(map_, p.x_, z); // mean_t = h^{-1}(x_t, z_t))
+    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_);
+    
     p.features_[feature_id].covariance_ = H.inverse() * robot_->getQt() * H.inverse().transpose();
     p.w_ = initial_w_;
   }
   else
   {
-    Eigen::VectorXd z_hat = predictMeasurement(p.features_[feature_id].mean_, p.x_);
-    Eigen::MatrixXd H = jacobianFeature(p.features_[feature_id].mean_, p.x_);
+    Eigen::VectorXd z_hat = robot_->predictMeasurement(map_, p.features_[feature_id].mean_, p.x_); // h(mean_{t-1}, x)
+    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_);
     Eigen::MatrixXd Q = H * p.features_[feature_id].covariance_ * H.transpose() + robot_->getQt();
     Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H.transpose() * Q.inverse(); // Kalman gain
     p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean

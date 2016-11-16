@@ -81,6 +81,7 @@ add_executable(slam_runner_node
   src/slam_runner.cpp
   src/fast_slam.cpp
   src/fast_slam2.cpp
+  src/multi_fast_slam.cpp
   src/motion_models/velocity_motion_model.cpp
   src/measurement_models/feature_measurement_model.cpp
   src/robot_models/interface_robot_model.cpp

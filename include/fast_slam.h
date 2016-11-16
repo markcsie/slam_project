@@ -29,13 +29,6 @@ private:
   std::vector<Particle> particles_;
 
   void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
-
-  Eigen::VectorXd samplePose(const Eigen::VectorXd &x, const Eigen::VectorXd &u) const;
-  Eigen::VectorXd predictMeasurement(const Eigen::VectorXd &mean, const Eigen::VectorXd &x)const;
-  Eigen::VectorXd inverseMeasurement(const Eigen::VectorXd &x, const Eigen::VectorXd &z) const;
-  Eigen::MatrixXd jacobianFeature(const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
-  
-  bool dead_reckoning_;
 };
 
 #endif /* FAST_SLAM_H */

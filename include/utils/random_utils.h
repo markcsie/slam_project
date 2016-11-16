@@ -1,6 +1,8 @@
 #ifndef RANDOM_UTILS_H
 #define RANDOM_UTILS_H
 
+#include "eigenmvn.h"
+
 static std::default_random_engine generator;
 
 namespace Utils
@@ -22,6 +24,13 @@ namespace Utils
   {
     std::discrete_distribution<size_t> distribution(weights.begin(), weights.end());
     return distribution(generator);
+  }
+
+  inline Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance)
+  {
+    // x ~ N(mean, covariance)
+    Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
+    return norm.samples(1);
   }
   
 }

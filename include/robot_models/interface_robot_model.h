@@ -26,6 +26,11 @@ public:
   virtual Eigen::MatrixXd jacobianPose(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
   virtual Eigen::MatrixXd jacobianFeature(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const;
   
+  const int &getId() const
+  {
+    return id_;
+  };
+  
   const std::string &getType() const
   {
     return type_;
@@ -60,6 +65,7 @@ public:
 protected:
   RobotModelInterface(); // abstract base class
 
+  int id_;
   std::string type_;
   size_t dim_;
   Eigen::VectorXd init_x_;

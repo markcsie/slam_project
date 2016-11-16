@@ -106,12 +106,20 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
       particles_matrix.row(i) = p.features_[it->first].mean_.transpose();
       i++;
     }
-    Eigen::MatrixXd temp = particles_matrix - Eigen::VectorXd::Ones(particles_matrix.rows(), 1) * features_average_x[it->first].transpose();
-    features_average_cov[it->first] = temp.transpose() * temp;
-    features_average_cov[it->first] /= (particles_matrix.rows() - 1);
+    
+    if (fast_slam_.getNumParticles() > 1) {
+      Eigen::MatrixXd temp = particles_matrix - Eigen::VectorXd::Ones(particles_matrix.rows(), 1) * features_average_x[it->first].transpose();
+      features_average_cov[it->first] = temp.transpose() * temp;
+      features_average_cov[it->first] /= (particles_matrix.rows() - 1);
+    } else {
+      features_average_cov[it->first] = fast_slam_.getParticle(0).features_[it->first].covariance_.transpose();
+    }
+    
+    cout << "ggg feature " << it->first << " x " << features_average_x[it->first].transpose() << endl;
+    cout << "ggg feature " << it->first << " cov " << std::endl << features_average_cov[it->first] << endl;
   }
     
-//  cout << "ggg average posterior " << average_x[0] << " " << average_x[1] << " " << average_x[2] << endl;
+  cout << "ggg particles average posterior " << average_x << endl;
   
   msg2.x = average_x[0];
   msg2.y = average_x[1];
@@ -259,7 +267,7 @@ int main(int argc, char **argv)
   double delta_t = 0.02; // TODO: from data_reader
   VelocityMotionModel velocity_model(motion_noise, delta_t);
 
-  MobileRobot2dModel robot(velocity_model, feature_model);
+  MobileRobot2dModel robot1(5, velocity_model, feature_model);
 
   Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x << 1.916028, -2.676211, 0.390500;
@@ -267,7 +275,7 @@ int main(int argc, char **argv)
   initial_cov << 0.000001, 0, 0,
                  0, 0.000001, 0,
                  0, 0, 0.000001;
-  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_cov, initial_w, robot, map); // TODO: dimension depends on the incoming data
+  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_cov, initial_w, robot1, map); // TODO: dimension depends on the incoming data
 
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 1000, &SlamRunner::frameCallback, &slam_runner);
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
