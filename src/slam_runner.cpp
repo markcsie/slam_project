@@ -31,7 +31,7 @@ public:
 
 private:
   FastSlam fast_slam_; // TODO: polymorphism for SLAM algorithm?
-//  FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
+  FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   MultiFastSlam multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
   size_t frame_count_;
 };
@@ -39,14 +39,14 @@ private:
 SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, MapModelInterface &map)
 : 
 fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
-//fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robot, map),
+fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map),
 frame_count_(0)
 {
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other)
-: fast_slam_(other.fast_slam_), /*fast_slam2_(other.fast_slam2_), */multi_fast_slam_(other.multi_fast_slam_), frame_count_(other.frame_count_)
+: fast_slam_(other.fast_slam_), fast_slam2_(other.fast_slam2_), multi_fast_slam_(other.multi_fast_slam_), frame_count_(other.frame_count_)
 {
 }
 
@@ -74,15 +74,21 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   //  for (int i=0; i<z.rows(); i++){
   //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
   //  }  
-  std::cout << "ggg frame " << frame_count_ << std::endl;
-//  fast_slam2_.process(u, z);
+//  std::cout << "ggg frame " << frame_count_ << std::endl;
+  
   fast_slam_.process(u, z);
+  const std::vector<Particle> particles = fast_slam_.getParticles();
+  const size_t num_particles = fast_slam_.getNumParticles();
+  
+//  fast_slam2_.process(u, z);
+//  const std::vector<Particle> particles = fast_slam2_.getParticles();
+//  const size_t num_particles = fast_slam2_.getNumParticles();
 
   Eigen::VectorXd average_x(3);
   average_x << 0, 0, 0;
   std::unordered_map<int, Eigen::VectorXd> features_average_x;
   std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
-  for (const Particle &p : fast_slam_.getParticles())
+  for (const Particle &p : particles)
   {
 //    std::cout << "p.x_ " << p.x_ << std::endl;
     average_x += p.x_;
@@ -98,29 +104,29 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
       }
     }
   }
-  average_x /= fast_slam_.getNumParticles();
+  average_x /= num_particles;
 
   for (const auto &it : features_average_x)
   {
-    features_average_x[it.first] /= fast_slam_.getNumParticles();
-    Eigen::MatrixXd particles_matrix(fast_slam_.getNumParticles(), 2);
+    features_average_x[it.first] /= num_particles;
+    Eigen::MatrixXd particles_matrix(num_particles, 2);
     size_t i = 0;
-    for (Particle p : fast_slam_.getParticles())
-    {
-      particles_matrix.row(i) = p.features_[it.first].mean_.transpose();
+    for (const Particle &p : particles)
+    { 
+      particles_matrix.row(i) = p.features_.find(it.first)->second.mean_.transpose();
       i++;
     }
     
-    if (fast_slam_.getNumParticles() > 1) {
+    if (num_particles > 1) {
       Eigen::MatrixXd temp = particles_matrix - Eigen::VectorXd::Ones(particles_matrix.rows(), 1) * features_average_x[it.first].transpose();
       features_average_cov[it.first] = temp.transpose() * temp;
       features_average_cov[it.first] /= (particles_matrix.rows() - 1);
     } else {
-      features_average_cov[it.first] = fast_slam_.getParticle(0).features_[it.first].covariance_.transpose();
+      features_average_cov[it.first] = particles[0].features_.find(it.first)->second.covariance_;
     }
     
-    cout << "ggg feature " << it.first << " x " << features_average_x[it.first].transpose() << endl;
-    cout << "ggg feature " << it.first << " cov " << std::endl << features_average_cov[it.first] << endl;
+//    cout << "ggg feature " << it.first << " x " << features_average_x[it.first].transpose() << endl;
+//    cout << "ggg feature " << it.first << " cov " << std::endl << features_average_cov[it.first] << endl;
   }
     
 //  cout << "ggg particles average posterior " << average_x << endl;
@@ -244,6 +250,8 @@ int main(int argc, char **argv)
 //  sample_mvn_cov = sample_mvn_cov / (mvn_samples.rows() - 1);
 //  std::cout << "sample_mvn_cov " << std::endl;
 //  std::cout << sample_mvn_cov << std::endl;
+  
+//  std::cout << "Utils::sampleGaussian(0, 0) " << Utils::sampleGaussian(0, 0) << std::endl;
   // =============
   
   ros::init(argc, argv, "slam_runner");
@@ -281,11 +289,9 @@ int main(int argc, char **argv)
   double delta_t = 0.02; // TODO: from data_reader
   VelocityMotionModel velocity_model(motion_noise, delta_t);
 
-//  MobileRobot2dModel robot1(5, velocity_model, feature_model);
-//  MobileRobot2dModel robot2(14, velocity_model, feature_model);
   std::vector<RobotModelInterface> robots;
-  robots.push_back(MobileRobot2dModel(5, velocity_model, feature_model));
-  robots.push_back(MobileRobot2dModel(14, velocity_model, feature_model));
+  robots.push_back(MobileRobot2dModel(5, velocity_model, feature_model)); // robot 1
+  robots.push_back(MobileRobot2dModel(14, velocity_model, feature_model)); // robot 2
 
   Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x << 1.916028, -2.676211, 0.390500;
@@ -293,7 +299,7 @@ int main(int argc, char **argv)
   initial_cov << 0.000001, 0, 0,
                  0, 0.000001, 0,
                  0, 0, 0.000001;
-  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(num_particles, initial_x), initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
+  SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(robots.size(), initial_x), initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
 
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 1000, &SlamRunner::frameCallback, &slam_runner);
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);

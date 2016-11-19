@@ -28,7 +28,7 @@ private:
   double initial_w_;
   std::vector<Particle> particles_;
 
-  void updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
+  double updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
 
   Eigen::VectorXd sampleMultivariateGaussian(const Eigen::VectorXd &mean, const Eigen::MatrixXd &covariance) const;
 };
