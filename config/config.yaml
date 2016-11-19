@@ -4,6 +4,6 @@ slam:
   num_particles: 100
   initial_w: 1.0
   # motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-  motion_noise: [100, 100, 100, 100, 100, 100]
+  motion_noise: [1, 1, 1, 1, 1, 1]
   
   measurement_noise: [0.0167, 0.000736589]

@@ -52,32 +52,33 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &feature
   else
   {
     //    std::cout << "ggg z: " << std::endl << features << std::endl;
+    // implement the algorithm in Table 13.3
+    std::vector<double> weights(particles_.size(), 1.0);
     for (size_t i = 0; i < num_measurements; i++)
     {
-      // implement the algorithm in Table 13.3
-      std::vector<double> weights(particles_.size());
       for (size_t j = 0; j < particles_.size(); j++)
       {
-        if (i == 0) 
+        if (i == 0)
         {
-          weights[j] = updateParticle(particles_[j], u, features.row(i));
+          weights[j] *= updateParticle(particles_[j], u, features.row(i));
         }
-        else 
+        else
         {
-          weights[j] = updateParticle(particles_[j], u.Zero(u.rows(), u.cols()), features.row(i));
+          weights[j] *= updateParticle(particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), features.row(i));
         }
       }
-      // resampling
-      std::vector<Particle> new_particles(particles_.size());
-      for (size_t i = 0; i < particles_.size(); i++)
-      {
-        new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
-        //        std::cout << "ggg Utils::sampleDiscrete(weights) " << Utils::sampleDiscrete(weights) << std::endl;
-        //      std::cout << "ggg new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
-      }
-      particles_ = new_particles;
-      //      std::cout << "ggg particles_.size() " << particles_.size() << std::endl;
     }
+
+    // resampling
+    std::vector<Particle> new_particles(particles_.size());
+    for (size_t i = 0; i < particles_.size(); i++)
+    {
+      new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
+      //        std::cout << "ggg Utils::sampleDiscrete(weights) " << Utils::sampleDiscrete(weights) << std::endl;
+      //      std::cout << "ggg new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
+    }
+    particles_ = new_particles;
+    //      std::cout << "ggg particles_.size() " << particles_.size() << std::endl;
   }
 }
 
@@ -86,7 +87,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &feature
 double FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   double weight = initial_w_;
-  
+
   const int feature_id = feature[0];
   const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
   //  std::cout << "ggg feature_id " << feature_id << std::endl;
@@ -96,9 +97,9 @@ double FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Ei
   {
     //    std::cout << "ggg new feature_id: " << feature_id << std::endl;
     p.x_ = robot_->samplePose(p.x_, u);
-//    std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
+    //    std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
     p.features_[feature_id].mean_ = robot_->inverseMeasurement(map_, p.x_, z); // mean_t = h^{-1}(x_t, z_t))
-//    std::cout << "ggg p.features_[feature_id].mean_ " << p.features_[feature_id].mean_.transpose() << std::endl;
+    //    std::cout << "ggg p.features_[feature_id].mean_ " << p.features_[feature_id].mean_.transpose() << std::endl;
     Eigen::MatrixXd H_m = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_);
     p.features_[feature_id].covariance_ = H_m.inverse() * robot_->getQt() * H_m.inverse().transpose();
     //    std::cout << "ggg p.features_[feature_id].covariance_ \n" << p.features_[feature_id].covariance_ << std::endl;
@@ -147,6 +148,6 @@ double FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Ei
     //    std::cout << "ggg temp " << temp << std::endl;
     weight = (1 / std::sqrt((2 * M_PI * L).determinant())) * std::exp(temp / -2);
   }
-  
+
   return weight;
 }

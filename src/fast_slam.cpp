@@ -52,32 +52,32 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
   }
   else
   {
+    // implement the algorithm in Table 13.1
+    std::vector<double> weights(particles_.size());
     for (size_t i = 0; i < num_measurements; i++)
     {
-      // implement the algorithm in Table 13.1
-      std::vector<double> weights(particles_.size());
       for (size_t j = 0; j < particles_.size(); j++)
       {
         if (i == 0)
         {
-          weights[j] = updateParticle(particles_[j], u, features.row(i));
+          weights[j] *= updateParticle(particles_[j], u, features.row(i));
         }
         else
         {
-          weights[j] = updateParticle(particles_[j], u.Zero(u.rows(), u.cols()), features.row(i));
+          weights[j] *= updateParticle(particles_[j], u.Zero(u.rows(), u.cols()), features.row(i));
         }
       }
-
-      // resampling for every measurement
-      std::vector<Particle> new_particles(particles_.size());
-      for (size_t j = 0; j < particles_.size(); j++)
-      {
-        new_particles[j] = particles_[Utils::sampleDiscrete(weights)];
-        //        std::cout << "ggg Utils::sampleDiscrete(weights) " << Utils::sampleDiscrete(weights) << std::endl;
-        //      std::cout << "ggg new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
-      }
-      particles_ = new_particles;
     }
+
+    // resampling
+    std::vector<Particle> new_particles(particles_.size());
+    for (size_t i = 0; i < particles_.size(); i++)
+    {
+      new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
+      //        std::cout << "ggg Utils::sampleDiscrete(weights) " << Utils::sampleDiscrete(weights) << std::endl;
+      //      std::cout << "ggg new_particles[i].x_ " << new_particles[i].x_.transpose() << std::endl;
+    }
+    particles_ = new_particles;
   }
 }
 

@@ -11,13 +11,13 @@ particles_(num_particles), initial_w_(initial_w), map_(&map)
   {
     robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
   }
-  assert(initial_x.size() == robots_.size()); // TODO: this is different from single slam
+  assert(initial_x.size() == robots_.size());
   for (size_t i = 0; i < num_particles; i++)
   {
-    for (size_t j = 0; j < initial_x.size(); j++) {
+    for (size_t j = 0; j < initial_x.size(); j++)
+    {
       particles_[i].x_[robots_[j]->getId()] = initial_x[j];
     }
-    particles_[i].w_ = initial_w_;
     particles_[i].cov_ = initial_cov;
   }
 
@@ -32,7 +32,7 @@ MultiFastSlam::~MultiFastSlam()
 {
 }
 
-size_t MultiFastSlam::getNumParticles() 
+size_t MultiFastSlam::getNumParticles()
 {
   return particles_.size();
 }
@@ -49,35 +49,81 @@ MultiRobotParticle MultiFastSlam::getParticle(const size_t &i)
 
 void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
+  assert(u.size() == features.size());
+  
+  std::vector<double> weights(particles_.size(), 1.0);
+  const size_t num_robots = u.size();
+  for (size_t i = 0; i < num_robots; i++)
+  {
+    const size_t num_measurements = features[i].rows();
+    const int robot_id = robots_[i]->getId();
+    if (num_measurements == 0)
+    {
+      for (MultiRobotParticle &p : particles_)
+      {
+        p.x_[robot_id] = robots_[i]->samplePose(p.x_[robot_id], u[i]); // x_t ~ p(x_t| x_{t-1}, u_t)
+      }
+    }
+    else
+    {
+      for (size_t j = 0; j < num_measurements; j++)
+      {
+        for (size_t k = 0; k < particles_.size(); k++)
+        {
+          if (j == 0)
+          {
+            weights[k] *= updateParticle(robots_[i], particles_[k], u[i], features[i].row(j));
+          }
+          else
+          {
+            weights[k] *= updateParticle(robots_[i], particles_[k], Eigen::VectorXd::Zero(u[i].rows(), u[i].cols()), features[i].row(j));
+          }
+        }
+      }
+    }
+  }
+
+  // resampling
+  std::vector<MultiRobotParticle> new_particles(particles_.size());
+  for (size_t i = 0; i < particles_.size(); i++)
+  {
+    new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
+  }
+  particles_ = new_particles;
 }
 
-//// TODO: check if z_t is after applying u_t????
-//void MultiFastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
-//{
-////  const int feature_id = feature[0];
-////  const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
-////  auto iter = p.features_.find(feature_id);
-////
-////  std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-////  p.x_ = samplePose(p.x_, u);
-////  std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-////  
-////  if (iter == p.features_.end()) // first time seeing the feature, do initialization 
-////  {
-////    p.features_[feature_id].mean_ = inverseMeasurement(p.x_, z);
-////    Eigen::MatrixXd H = jacobianFeature(p.features_[feature_id].mean_, p.x_);
-////    p.features_[feature_id].covariance_ = H.inverse() * robot_->getQt() * H.inverse().transpose();
-////    p.w_ = initial_w_;
-////  }
-////  else
-////  {
-////    Eigen::VectorXd z_hat = predictMeasurement(p.features_[feature_id].mean_, p.x_);
-////    Eigen::MatrixXd H = jacobianFeature(p.features_[feature_id].mean_, p.x_);
-////    Eigen::MatrixXd Q = H * p.features_[feature_id].covariance_ * H.transpose() + robot_->getQt();
-////    Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H.transpose() * Q.inverse(); // Kalman gain
-////    p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean
-////    p.features_[feature_id].covariance_ = (Eigen::MatrixXd::Identity(K.rows(), K.rows()) - K * H) * p.features_[feature_id].covariance_; // update feature covariance
-////    double temp = (z - z_hat).transpose() * Q.inverse() * (z - z_hat);
-////    p.w_ = (1 / std::sqrt(Q.determinant() * 2 * M_PI)) * std::exp(temp / -2);
-////  }
-//}
+// TODO: check if z_t is after applying u_t????
+
+double MultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
+{
+  double weight = initial_w_;
+
+  const int robot_id = robot->getId();
+  const int feature_id = feature[0];
+  const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
+  auto iter = p.features_.find(feature_id);
+
+  p.x_[robot_id] = robot->samplePose(p.x_[robot_id], u);
+
+  if (iter == p.features_.end()) // first time seeing the feature, do initialization 
+  {
+    p.features_[feature_id].mean_ = robot->inverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
+    Eigen::MatrixXd H = robot->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id]);
+
+    p.features_[feature_id].covariance_ = H.inverse() * robot->getQt() * H.inverse().transpose();
+    weight = initial_w_;
+  }
+  else
+  {
+    Eigen::VectorXd z_hat = robot->predictMeasurement(map_, p.features_[feature_id].mean_, p.x_[robot_id]); // h(mean_{t-1}, x)
+    Eigen::MatrixXd H = robot->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id]);
+    Eigen::MatrixXd Q = H * p.features_[feature_id].covariance_ * H.transpose() + robot->getQt();
+    Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H.transpose() * Q.inverse(); // Kalman gain
+    p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean
+    p.features_[feature_id].covariance_ = (Eigen::MatrixXd::Identity(K.rows(), K.rows()) - K * H) * p.features_[feature_id].covariance_; // update feature covariance
+    double temp = (z - z_hat).transpose() * Q.inverse() * (z - z_hat);
+    weight = (1 / std::sqrt((2 * M_PI * Q).determinant())) * std::exp(temp / -2);
+  }
+
+  return weight;
+}

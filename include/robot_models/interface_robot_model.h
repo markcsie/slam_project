@@ -48,19 +48,19 @@ public:
     
   const Eigen::MatrixXd &getQt() const;
   
-  Eigen::VectorXd getRandomX(const std::shared_ptr<const MapModelInterface> &map) const 
-  {
-    Eigen::VectorXd p = map->getRandomPosition();
-    assert(dim_ >= map->getDim());
-    p.conservativeResize(dim_, Eigen::NoChange);
-    
-    // orientation
-    for (size_t i = map->getDim(); i < p.rows(); i++) {
-      p[i] = Utils::sampleUniform(-M_PI, +M_PI);
-    }
-
-    return p;
-  };
+//  Eigen::VectorXd getRandomX(const std::shared_ptr<const MapModelInterface> &map) const 
+//  {
+//    Eigen::VectorXd p = map->getRandomPosition();
+//    assert(dim_ >= map->getDim());
+//    p.conservativeResize(dim_, Eigen::NoChange);
+//    
+//    // orientation
+//    for (size_t i = map->getDim(); i < p.rows(); i++) {
+//      p[i] = Utils::sampleUniform(-M_PI, +M_PI);
+//    }
+//
+//    return p;
+//  };
   
 protected:
   RobotModelInterface(); // abstract base class

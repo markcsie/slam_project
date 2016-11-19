@@ -30,7 +30,7 @@ private:
   double initial_w_;
   std::vector<MultiRobotParticle> particles_;
 
-  void updateParticle(MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
+  double updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
 };
 
 #endif /* MULTI_FAST_SLAM_H */

@@ -69,20 +69,20 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     z(i, 1) = msg.range[i];
     z(i, 2) = msg.bearing[i];
   }
-  //  std::cout<<u[0]<<" "<<u[1]<<std::endl;
+  std::cout << "ggg " << u.transpose() << std::endl;
   //  std::cout<<"z rows: "<<z.rows()<<std::endl;
   //  for (int i=0; i<z.rows(); i++){
   //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
   //  }  
 //  std::cout << "ggg frame " << frame_count_ << std::endl;
   
-  fast_slam_.process(u, z);
-  const std::vector<Particle> particles = fast_slam_.getParticles();
-  const size_t num_particles = fast_slam_.getNumParticles();
+//  fast_slam_.process(u, z);
+//  const std::vector<Particle> particles = fast_slam_.getParticles();
+//  const size_t num_particles = fast_slam_.getNumParticles();
   
-//  fast_slam2_.process(u, z);
-//  const std::vector<Particle> particles = fast_slam2_.getParticles();
-//  const size_t num_particles = fast_slam2_.getNumParticles();
+  fast_slam2_.process(u, z);
+  const std::vector<Particle> particles = fast_slam2_.getParticles();
+  const size_t num_particles = fast_slam2_.getNumParticles();
 
   Eigen::VectorXd average_x(3);
   average_x << 0, 0, 0;
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 //  std::cout << "uniform_max " << *std::max_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
 //  std::cout << "uniform_min " << *std::min_element(uniform_samples.begin(), uniform_samples.end()) << std::endl;
 //  
-//  // test Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
+  // test Eigen::EigenMultivariateNormal<double> norm(mean, covariance);
 //  Eigen::MatrixXd mvn_samples(20000, 3);
 //  Eigen::VectorXd mvn_mean(3);
 //  mvn_mean << 1, 2, 3;
