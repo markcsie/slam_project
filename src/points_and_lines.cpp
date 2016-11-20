@@ -195,16 +195,14 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "points_and_lines");
 
   ros::NodeHandle n;
-  marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
-  marker_pub2 = n.advertise<visualization_msgs::Marker>("visualization_marker2", 10);
-  marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 10);
-  marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 10);
+  marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 100000);
+  marker_pub2 = n.advertise<visualization_msgs::Marker>("visualization_marker2", 100000);
+  marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
+  marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 100000);
   //ellipse
-  marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
+  marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100000);
   cout << "aaa" << endl;
-  ros::Subscriber subscriber = n.subscribe("/publishMsg4", 1000, publishMsg_callback);
-
-  ros::Rate r(10);
+  ros::Subscriber subscriber = n.subscribe("/publishMsg4", 100000, publishMsg_callback);
 
   float f = 0.0;
 
@@ -218,6 +216,7 @@ int main(int argc, char** argv)
   points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
   
   //lifetime
+  // TODO: default is ros::Duration()?
   points.lifetime = ros::Duration();  // A value of ros::Duration() means never to auto-delete
   points2.lifetime = ros::Duration();
 
@@ -253,16 +252,19 @@ int main(int argc, char** argv)
     p.x = landmark_groundtruth[i].x;
     p.y = landmark_groundtruth[i].y;
     points3.points.push_back(p);
-
   }
-
+  
+  while (marker_pub3.getNumSubscribers() == 0) // TODO: Give time to Rviz to be fully started
+  {
+  
+  }
+  marker_pub3.publish(points3);
+  
 
   cout << M_PI << endl;
   cout << std::atan(1) << endl;
   while (ros::ok())
   {
-    marker_pub3.publish(points3);
     ros::spinOnce();
-    r.sleep();
   }
 }

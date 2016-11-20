@@ -34,6 +34,8 @@ private:
   FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   MultiFastSlam multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
   size_t frame_count_;
+  
+  double last_time_;
 };
 
 SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, MapModelInterface &map)
@@ -41,7 +43,8 @@ SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::Vec
 fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map),
-frame_count_(0)
+frame_count_(0),
+last_time_(0.0)
 {
 }
 
@@ -55,8 +58,7 @@ SlamRunner::~SlamRunner()
 }
 
 void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
-{
-  frame_count_++;
+{  
   Eigen::VectorXd u(2);
   u[0] = msg.forward_velocity;
   u[1] = msg.angular_velocity;
@@ -69,12 +71,16 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
     z(i, 1) = msg.range[i];
     z(i, 2) = msg.bearing[i];
   }
-  std::cout << "ggg " << u.transpose() << std::endl;
+//  std::cout << "ggg " << u.transpose() << std::endl;
   //  std::cout<<"z rows: "<<z.rows()<<std::endl;
   //  for (int i=0; i<z.rows(); i++){
   //    std::cout<<z(i,0)<<" "<<z(i,1)<<" "<<z(i,2)<<std::endl;
-  //  }  
-//  std::cout << "ggg frame " << frame_count_ << std::endl;
+  //  }
+  
+  assert(std::abs(msg.time - last_time_ - 0.02) < 0.00001 || frame_count_ == 0);
+  std::cout << "ggg msg.time " << msg.time << " frame " << frame_count_ << " u " << u.transpose() << std::endl;
+  last_time_ = msg.time;
+  frame_count_++;
   
 //  fast_slam_.process(u, z);
 //  const std::vector<Particle> particles = fast_slam_.getParticles();
@@ -254,10 +260,11 @@ int main(int argc, char **argv)
 //  std::cout << "Utils::sampleGaussian(0, 0) " << Utils::sampleGaussian(0, 0) << std::endl;
   // =============
   
+//  std::cout.precision(20);
+  
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
-  ros::Rate rate(50);
   ROS_INFO("start spinning");
 
   int num_particles;
@@ -301,14 +308,12 @@ int main(int argc, char **argv)
                  0, 0, 0.000001;
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(robots.size(), initial_x), initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
 
-  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 1000, &SlamRunner::frameCallback, &slam_runner);
-  slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 1000);
+  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::frameCallback, &slam_runner);
+  slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 100000);
 
-  int i = 0;
   while (ros::ok())
   {
     ros::spinOnce(); // check for incoming messages
-    rate.sleep();
   }
 
   return EXIT_SUCCESS;
