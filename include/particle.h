@@ -2,6 +2,7 @@
 #define PARTICLE_H
 
 #include "utils/gaussian.h"
+#include <unordered_map>
 
 struct Particle
 {

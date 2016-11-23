@@ -14,9 +14,6 @@
 
 #include "../include/utils/eigenmvn.h"
 
-//global variable
-vector<groundtruth> robot_groundtruth;
-
 class SlamRunner
 {
 public:

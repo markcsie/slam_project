@@ -49,41 +49,16 @@ MultiRobotParticle MultiFastSlam::getParticle(const size_t &i)
 
 void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
-  assert(u.size() == features.size());
-  
-  std::vector<double> weights(particles_.size(), 1.0);
-  const size_t num_robots = u.size();
-  for (size_t i = 0; i < num_robots; i++)
+  assert(u.size() == robots_.size() && u.size() == features.size());
+
+  std::vector<double> weights;
+  for (size_t i = 0; i < robots_.size(); i++)
   {
-    const size_t num_measurements = features[i].rows();
-    const int robot_id = robots_[i]->getId();
-    if (num_measurements == 0)
-    {
-      for (MultiRobotParticle &p : particles_)
-      {
-        p.x_[robot_id] = robots_[i]->samplePose(p.x_[robot_id], u[i]); // x_t ~ p(x_t| x_{t-1}, u_t)
-      }
-    }
-    else
-    {
-      for (size_t j = 0; j < num_measurements; j++)
-      {
-        for (size_t k = 0; k < particles_.size(); k++)
-        {
-          if (j == 0)
-          {
-            weights[k] *= updateParticle(robots_[i], particles_[k], u[i], features[i].row(j));
-          }
-          else
-          {
-            weights[k] *= updateParticle(robots_[i], particles_[k], Eigen::VectorXd::Zero(u[i].rows(), u[i].cols()), features[i].row(j));
-          }
-        }
-      }
-    }
+    weights = updateRobot(robots_[i], u[i], features[i]);
   }
 
   // resampling
+  assert(weights.size() == particles_.size());
   std::vector<MultiRobotParticle> new_particles(particles_.size());
   for (size_t i = 0; i < particles_.size(); i++)
   {
@@ -92,8 +67,41 @@ void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::ve
   particles_ = new_particles;
 }
 
-// TODO: check if z_t is after applying u_t????
+std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
+{
+  std::vector<double> weights(particles_.size(), 1.0);
 
+  const size_t num_measurements = features.rows();
+  const int robot_id = robot->getId();
+  if (num_measurements == 0)
+  {
+    for (MultiRobotParticle &p : particles_)
+    {
+      p.x_[robot_id] = robot->samplePose(p.x_[robot_id], u); // x_t ~ p(x_t| x_{t-1}, u_t)
+    }
+  }
+  else
+  {
+    for (size_t i = 0; i < num_measurements; i++)
+    {
+      for (size_t j = 0; j < particles_.size(); j++)
+      {
+        if (i == 0)
+        {
+          weights[j] *= updateParticle(robot, particles_[j], u, features.row(i));
+        }
+        else
+        {
+          weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), features.row(i));
+        }
+      }
+    }
+  }
+
+  return weights;
+}
+
+// TODO: check if z_t is after applying u_t????
 double MultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   double weight = initial_w_;
