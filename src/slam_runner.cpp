@@ -23,7 +23,6 @@ public:
   virtual ~SlamRunner();
 
   ros::Publisher dataPublisher;
-  slam_project::Robot_GroundTruth msg2;
   void frameCallback(const slam_project::Robot_Odometry_Single &msg);
   void multiFrameCallback(const slam_project::Robot_Odometry &msg); //multi-robot
 
@@ -31,8 +30,10 @@ private:
   FastSlam fast_slam_; // TODO: polymorphism for SLAM algorithm?
   FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   MultiFastSlam multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
-  size_t frame_count_;
   
+  std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
+  
+  size_t frame_count_;
   double last_time_;
 };
 
@@ -44,6 +45,10 @@ multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map),
 frame_count_(0),
 last_time_(0.0)
 {
+  for (const RobotModelInterface & r : robots)
+  {
+    robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
+  }
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other)
@@ -135,6 +140,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry_Single &msg)
     
 //  cout << "ggg particles average posterior " << average_x << endl;
   
+  slam_project::Robot_GroundTruth msg2;
   msg2.x = average_x[0];
   msg2.y = average_x[1];
 
@@ -187,17 +193,13 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry_Single &msg)
 }
 
 void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
-{
-  frame_count_++;
-  
+{  
   // TODO: multi-robot data
+
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
-
-  int n = msg.robot_num;
-  multi_u.resize(n);
-  multi_z.resize(n);
-  for (int i=0; i<n; i++){
+  for (int i = 0; i < msg.robot_num; i++)
+  {
     Eigen::VectorXd u(2);
     u[0] = msg.forward_velocity[i];
     u[1] = msg.angular_velocity[i];
@@ -205,38 +207,36 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
 
     int len = msg.num[i];
     Eigen::MatrixXd z(len, 3);
-    for (int j=0; j<len; j++){
-
-
+    for (int j = 0; j < len; j++)
+    {
       z(j, 0) = msg.measure[i].subject[j];
       z(j, 1) = msg.measure[i].range[j];
       z(j, 2) = msg.measure[i].bearing[j];
-        
     }
-    multi_u[i][0] = msg.forward_velocity[i];
-    multi_u[i][1] = msg.angular_velocity[i];   
+    multi_z.push_back(z);
   }
   
-
-  //assert(std::abs(msg.time[0] - last_time_ - 0.02) < 0.00001 || frame_count_ == 0);
-  
-
+//  std::cout << "ggg msg.time.size() " << msg.time.size() << std::endl;
+//  std::cout << "ggg msg.time[0] " << msg.time[0] << std::endl;
+//  std::cout << "ggg frame_count_ " << frame_count_ << std::endl;
+  assert(std::abs(msg.time[0] - last_time_ - 0.02) < 0.00001 || frame_count_ == 0);  
   last_time_ = msg.time[0];
   frame_count_++;
-  
-
   multi_fast_slam_.process(multi_u, multi_z);
 
-/*  const std::vector<MultiRobotParticle> particles = multi_fast_slam_.getParticles();
+  const std::vector<MultiRobotParticle> particles = multi_fast_slam_.getParticles();
   const size_t num_particles = multi_fast_slam_.getNumParticles();
-
-  Eigen::VectorXd average_x(3);
-  average_x << 0, 0, 0;
+  
+  std::vector<Eigen::VectorXd> average_x(msg.robot_num, Eigen::VectorXd::Zero(3));
   std::unordered_map<int, Eigen::VectorXd> features_average_x;
   std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
   for (const MultiRobotParticle &p : particles)
   {
-    average_x += p.x_;
+    for (size_t i = 0; i < msg.robot_num; i++)
+    {
+      average_x[i] += p.x_.find(robots_[i]->getId())->second;
+    }
+    
     for (const auto &it : p.features_)
     {
       if (features_average_x.find(it.first) == features_average_x.end())
@@ -249,7 +249,12 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
       }
     }
   }
-  average_x /= num_particles;
+  
+  for (size_t i = 0; i < msg.robot_num; i++)
+  {
+    average_x[i] /= num_particles;
+  }
+ 
 
   for (const auto &it : features_average_x)
   {
@@ -272,8 +277,10 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
     
   }
       
-  msg2.x = average_x[0];
-  msg2.y = average_x[1];
+  // TODO: multi robot
+  slam_project::Robot_GroundTruth msg2;
+  msg2.x = average_x[0][0];
+  msg2.y = average_x[0][1];
 
   msg2.num = features_average_x.size(); //TODO
   msg2.landmark_x.clear();
@@ -320,7 +327,7 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
     i++;
   }
 
-  dataPublisher.publish(msg2);*/
+  dataPublisher.publish(msg2);
 }
 
 int main(int argc, char **argv)
@@ -422,8 +429,8 @@ int main(int argc, char **argv)
   VelocityMotionModel velocity_model(motion_noise, delta_t);
 
   std::vector<RobotModelInterface> robots;
-  robots.push_back(MobileRobot2dModel(5, velocity_model, feature_model)); // robot 1
-  robots.push_back(MobileRobot2dModel(14, velocity_model, feature_model)); // robot 2
+  robots.push_back(MobileRobot2dModel(5, velocity_model, feature_model)); // robot 1 // TODO: different models?
+  robots.push_back(MobileRobot2dModel(14, velocity_model, feature_model)); // robot 2 // TODO: different models?
 
   Eigen::VectorXd initial_x(3); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x << 1.916028, -2.676211, 0.390500;

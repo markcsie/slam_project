@@ -50,10 +50,10 @@ MultiRobotParticle MultiFastSlam::getParticle(const size_t &i)
 void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
   assert(u.size() == robots_.size() && u.size() == features.size());
-
   std::vector<double> weights;
   for (size_t i = 0; i < robots_.size(); i++)
   {
+//    std::cout << "ggg u[i] " << u[i].transpose() << std::endl;
     weights = updateRobot(robots_[i], u[i], features[i]);
   }
 

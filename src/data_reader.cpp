@@ -420,10 +420,10 @@ int main(int argc, char **argv)
   ROS_INFO("start spinning");
   int j = 0;
   kk.resize(n, 0);
-  
-/*  while (dataPublisher2.getNumSubscribers() == 0) 
+
+  while (dataPublisher2.getNumSubscribers() == 0)
   {
-  }*/
+  }
   
   while (ros::ok())
   {
