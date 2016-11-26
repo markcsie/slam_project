@@ -1,9 +1,11 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-
+#include <sstream>
 #include "slam_project/Robot_GroundTruth.h"
 #include "slam_project/Robot_Odometry.h"
+#include "slam_project/Robot_Odometry_Single.h"
+#include "slam_project/Robot_Measure.h"
 #include "slam_project/requestBarcode.h"
 using namespace std;
 
@@ -45,6 +47,14 @@ struct landmark{
 
 void readData();
 slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i);
-slam_project::Robot_Odometry sendMsg_Odometry(int j);
+slam_project::Robot_Odometry_Single sendMsg_Odometry(int j);
 bool add(slam_project::requestBarcode::Request &req,
          slam_project::requestBarcode::Response &res);
+
+
+//multi robot
+void readMultiData(int n);
+slam_project::Robot_Odometry sendMultiMsg_Odometry(int j, int n);
+void readMeasurement(int index, string path_measure);
+void readOdometry(int index, string path_odometry);
+void readGroundtruth(int index, string path_groundtruth);

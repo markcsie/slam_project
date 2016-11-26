@@ -9,6 +9,7 @@
 #include "slam_project/Robot_Odometry.h"
 #include "slam_project/requestBarcode.h"
 #include "slam_project/Robot_GroundTruth.h"
+#include "slam_project/Robot_Odometry_Single.h"
 #include "std_msgs/Float64MultiArray.h"
 #include "../include/data_reader.h"
 
@@ -23,7 +24,7 @@ public:
 
   ros::Publisher dataPublisher;
   slam_project::Robot_GroundTruth msg2;
-  void frameCallback(const slam_project::Robot_Odometry &msg);
+  void frameCallback(const slam_project::Robot_Odometry_Single &msg);
   void multiFrameCallback(const slam_project::Robot_Odometry &msg); //multi-robot
 
 private:
@@ -54,7 +55,7 @@ SlamRunner::~SlamRunner()
 {
 }
 
-void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
+void SlamRunner::frameCallback(const slam_project::Robot_Odometry_Single &msg)
 {  
   Eigen::VectorXd u(2);
   u[0] = msg.forward_velocity;
@@ -192,7 +193,134 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
   // TODO: multi-robot data
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
+
+  int n = msg.robot_num;
+  multi_u.resize(n);
+  multi_z.resize(n);
+  for (int i=0; i<n; i++){
+    Eigen::VectorXd u(2);
+    u[0] = msg.forward_velocity[i];
+    u[1] = msg.angular_velocity[i];
+    multi_u.push_back(u);
+
+    int len = msg.num[i];
+    Eigen::MatrixXd z(len, 3);
+    for (int j=0; j<len; j++){
+
+
+      z(j, 0) = msg.measure[i].subject[j];
+      z(j, 1) = msg.measure[i].range[j];
+      z(j, 2) = msg.measure[i].bearing[j];
+        
+    }
+    multi_u[i][0] = msg.forward_velocity[i];
+    multi_u[i][1] = msg.angular_velocity[i];   
+  }
+  
+
+  //assert(std::abs(msg.time[0] - last_time_ - 0.02) < 0.00001 || frame_count_ == 0);
+  
+
+  last_time_ = msg.time[0];
+  frame_count_++;
+  
+
   multi_fast_slam_.process(multi_u, multi_z);
+
+/*  const std::vector<MultiRobotParticle> particles = multi_fast_slam_.getParticles();
+  const size_t num_particles = multi_fast_slam_.getNumParticles();
+
+  Eigen::VectorXd average_x(3);
+  average_x << 0, 0, 0;
+  std::unordered_map<int, Eigen::VectorXd> features_average_x;
+  std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
+  for (const MultiRobotParticle &p : particles)
+  {
+    average_x += p.x_;
+    for (const auto &it : p.features_)
+    {
+      if (features_average_x.find(it.first) == features_average_x.end())
+      {
+        features_average_x[it.first] = it.second.mean_;
+      }
+      else
+      {
+        features_average_x[it.first] += it.second.mean_;
+      }
+    }
+  }
+  average_x /= num_particles;
+
+  for (const auto &it : features_average_x)
+  {
+    features_average_x[it.first] /= num_particles;
+    Eigen::MatrixXd particles_matrix(num_particles, 2);
+    size_t i = 0;
+    for (const MultiRobotParticle &p : particles)
+    { 
+      particles_matrix.row(i) = p.features_.find(it.first)->second.mean_.transpose();
+      i++;
+    }
+    
+    if (num_particles > 1) {
+      Eigen::MatrixXd temp = particles_matrix - Eigen::VectorXd::Ones(particles_matrix.rows(), 1) * features_average_x[it.first].transpose();
+      features_average_cov[it.first] = temp.transpose() * temp;
+      features_average_cov[it.first] /= (particles_matrix.rows() - 1);
+    } else {
+      features_average_cov[it.first] = particles[0].features_.find(it.first)->second.covariance_;
+    }
+    
+  }
+      
+  msg2.x = average_x[0];
+  msg2.y = average_x[1];
+
+  msg2.num = features_average_x.size(); //TODO
+  msg2.landmark_x.clear();
+  msg2.landmark_y.clear();
+  msg2.landmark_cov.clear();
+  
+  msg2.landmark_x.resize(msg2.num); //TODO
+  msg2.landmark_y.resize(msg2.num);
+  msg2.landmark_cov.resize(msg2.num);
+
+  int i = 0;
+//  cout << "map size: " << average_features.size() << endl;
+  for (auto n = features_average_x.begin(); n != features_average_x.end(); ++n)
+  {
+    //2*2 matrix 
+    //  n->second.covariance
+    //  calculate eigen value, eigen vector
+
+    //  filter nan value
+    
+    //  for( const auto& n : p.features_ ) {
+    msg2.landmark_x[i] = n->second[0];
+    msg2.landmark_y[i] = n->second[1];
+//    cout << "ggg ******* landmark " << n->second.mean_[0] << " " << n->second.mean_[1] << endl;
+
+    msg2.landmark_cov[i].layout.dim.clear();
+    msg2.landmark_cov[i].layout.dim.resize(2);
+    msg2.landmark_cov[i].layout.dim[0].label = "row";
+    msg2.landmark_cov[i].layout.dim[0].size = 2;
+    msg2.landmark_cov[i].layout.dim[0].stride = 4;
+    msg2.landmark_cov[i].layout.dim[1].label = "col";
+    msg2.landmark_cov[i].layout.dim[1].size = 2;
+    msg2.landmark_cov[i].layout.dim[1].stride = 2;
+    msg2.landmark_cov[i].layout.data_offset = 0;
+    msg2.landmark_cov[i].data.clear();
+    msg2.landmark_cov[i].data.resize(4);
+    msg2.landmark_cov[i].data[0] = features_average_cov[n->first](0, 0);
+    msg2.landmark_cov[i].data[1] = features_average_cov[n->first](0, 1);
+    msg2.landmark_cov[i].data[2] = features_average_cov[n->first](1, 0);
+    msg2.landmark_cov[i].data[3] = features_average_cov[n->first](1, 1);
+//    std::cout << "ggg ******* landmark cov " << std::endl;
+//    std::cout << n->second.covariance_ << std::endl;
+
+    i++;
+  }
+
+  dataPublisher.publish(msg2);*/
 }
 
 int main(int argc, char **argv)
@@ -305,7 +433,8 @@ int main(int argc, char **argv)
                  0, 0, 0.000001;
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(robots.size(), initial_x), initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
 
-  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::frameCallback, &slam_runner);
+  //ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::frameCallback, &slam_runner);
+  ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::multiFrameCallback, &slam_runner);  
   slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 100000);
 
   while (ros::ok())

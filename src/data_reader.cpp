@@ -8,8 +8,187 @@ vector<groundtruth> robot_groundtruth;
 vector<int> subject;
 vector<landmark> landmark_groundtruth;
 
+
+//for multi-robot
+vector<vector<measure> > multirobot_measurement;
+vector<vector<odometry> > multirobot_odometry;
+vector<vector<groundtruth> > multirobot_groundtruth;
+
 int k = 0;
+vector<int> kk;
 //robot_measurement robot_odometry robot_groundtruth subject landmark_groundtruth
+
+//n is the number of robots
+void readMultiData(int n){
+  multirobot_groundtruth.resize(n);
+  multirobot_odometry.resize(n);
+  multirobot_measurement.resize(n);
+  string path = ros::package::getPath("slam_project");
+  for (int i=1; i<=n; i++){
+    stringstream ss; 
+    ss << i;
+    string str = ss.str();
+    string path_measure =  path+ "/data/newRobot" + str + "_Measurement.txt";
+    string path_odometry = path+ "/data/newRobot" + str + "_Odometry.txt";
+    string path_groundtruth = path+ "/data/newRobot" + str + "_Groundtruth.txt";
+    readMeasurement(i-1, path_measure);
+    readOdometry(i-1, path_odometry);
+    //readGroundtruth(i, path_groundtruth);
+  }
+}
+
+
+void readMeasurement(int index, string path_measure){
+  ifstream file1(path_measure);
+  ifstream file1_2(path_measure);
+  int line_count1 = 0;
+  string line1;
+  while (getline(file1, line1))
+    ++line_count1;
+  double m_time, m_bearing, m_range;
+  int m_subject;
+  measure m_cur;
+  for (int i = 0; i < line_count1; i++)
+  {
+    file1_2 >> m_time >> m_subject >> m_range>>m_bearing;
+    m_cur.id = i;
+    m_cur.time = m_time;
+    m_cur.subject = m_subject;
+    m_cur.range = m_range;
+    m_cur.bearing = m_bearing;
+    multirobot_measurement[index].push_back(m_cur);
+  }
+  file1.close();
+  file1_2.close();
+}
+
+
+void readOdometry(int index, string path_odometry){
+  ifstream file2(path_odometry);
+  ifstream file2_2(path_odometry);
+  int line_count2 = 0;
+  string line2;
+  double o_time, o_forward_velocity, o_angular_velocity;
+  odometry o_cur;
+  while (getline(file2, line2))
+    ++line_count2;
+  for (int i = 0; i < line_count2; i++)
+  {
+    file2_2 >> o_time >> o_forward_velocity>>o_angular_velocity;
+    o_cur.id = i;
+    o_cur.time = o_time;
+    o_cur.forward_velocity = o_forward_velocity;
+    o_cur.angular_veolocity = o_angular_velocity;
+    multirobot_odometry[index].push_back(o_cur);
+  }
+  file2.close();
+  file2_2.close();
+
+}
+
+
+
+void readGroundtruth(int index, string path_groundtruth){
+  ifstream file3(path_groundtruth);
+  ifstream file3_2(path_groundtruth);
+  int line_count3 = 0;
+  string line3;
+  double g_time, g_x, g_y, g_orientation;
+  groundtruth g_cur;
+  while (getline(file3, line3))
+    ++line_count3;
+  for (int i = 0; i < line_count3; i++)
+  {
+    file3_2 >> g_time >> g_x >> g_y>>g_orientation;
+    g_cur.id = i;
+    g_cur.time = g_time;
+    g_cur.x = g_x;
+    g_cur.y = g_y;
+    g_cur.orientation = g_orientation;
+    multirobot_groundtruth[index].push_back(g_cur);
+  }
+  file3.close();
+  file3_2.close();
+}
+
+  
+//n is the number of robots
+slam_project::Robot_Odometry sendMultiMsg_Odometry(int j, int n)
+{
+  cout<<"j: "<<endl;
+  slam_project::Robot_Odometry msg_odometry;
+
+  msg_odometry.num.resize(n);
+  msg_odometry.time.resize(n);
+  msg_odometry.forward_velocity.resize(n);
+  msg_odometry.angular_velocity.resize(n);
+  msg_odometry.measure.resize(n);
+  msg_odometry.robot_num = n;
+
+  for (int i=0; i<n; i++){
+    msg_odometry.time[i] = multirobot_odometry[i][j].time;
+    msg_odometry.forward_velocity[i] = multirobot_odometry[i][j].forward_velocity;
+    msg_odometry.angular_velocity[i] = multirobot_odometry[i][j].angular_veolocity;
+  }
+
+  int count = 0;
+  vector<vector<int> > msg_subject(n);
+  vector<vector<double> > msg_range(n);
+  vector<vector<double> > msg_bearing(n);
+
+  //only robot1, robot2, ..., robotn's data is transmitted
+  for (int i=0; i<n; i++){
+    count = 0;
+    cout<<"kk[i]: "<<kk[i]<<endl;
+    if (multirobot_measurement[i][kk[i]].time == msg_odometry.time[i]){
+      while (multirobot_measurement[i][kk[i]].time == msg_odometry.time[i]){
+        bool flag = true;
+        //n=2
+        //m=3,4,5
+        for (int m=n+1; m<=5; m++){
+          if (multirobot_measurement[i][kk[i]].subject == subject[m]){
+            flag = false;
+            break;
+          }
+        }
+        if (flag){
+          msg_subject[i].push_back(multirobot_measurement[i][kk[i]].subject);
+          msg_range[i].push_back(multirobot_measurement[i][kk[i]].range);
+          msg_bearing[i].push_back(multirobot_measurement[i][kk[i]].bearing);
+          count++;
+        }
+        kk[i]++;
+      }   
+    }
+
+    if (count)
+    {
+      msg_odometry.measure[i].subject.resize(count);
+      msg_odometry.measure[i].range.resize(count);
+      msg_odometry.measure[i].bearing.resize(count);
+      for (int l = 0; l < count; l++)
+      {
+        msg_odometry.measure[i].subject[l] = msg_subject[i][l];
+        msg_odometry.measure[i].range[l] = msg_range[i][l];
+        msg_odometry.measure[i].bearing[l] = msg_bearing[i][l];
+      }
+
+    }
+    msg_odometry.num[i] = count;
+
+  }
+
+  cout << "j: " << j << " time: " << msg_odometry.time[0] << " " <<
+          "num: " << msg_odometry.num[0] <<endl;
+
+  cout << "j: " << j << " time: " << msg_odometry.time[1] << " " <<
+          "num: " << msg_odometry.num[1] <<endl;    
+
+
+  return msg_odometry;
+}
+
+//single robot
 
 void readData()
 {
@@ -143,10 +322,10 @@ slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i)
   return msg;
 }
 
-slam_project::Robot_Odometry sendMsg_Odometry(int j)
+slam_project::Robot_Odometry_Single sendMsg_Odometry(int j)
 {
 
-  slam_project::Robot_Odometry msg_odometry;
+  slam_project::Robot_Odometry_Single msg_odometry;
 
   msg_odometry.time = robot_odometry[j].time;
   msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
@@ -219,7 +398,51 @@ bool add(slam_project::requestBarcode::Request &req,
   return true;
 }
 
+
+
+//multi robot
 int main(int argc, char **argv)
+{
+  int n = 2; //number of robots
+  readData();
+  readMultiData(n);
+
+
+
+  ros::init(argc, argv, "data_reader"); //node name "data_reader"
+  ros::NodeHandle node;
+
+  ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 100000);
+  ros::ServiceServer service = node.advertiseService("requestData", add);
+  ROS_INFO("Ready to send barcode data.");
+  
+  ros::Rate rate(100);
+  ROS_INFO("start spinning");
+  int j = 0;
+  kk.resize(n, 0);
+  
+/*  while (dataPublisher2.getNumSubscribers() == 0) 
+  {
+  }*/
+  
+  while (ros::ok())
+  {
+    cout<<j<<endl;
+    if (j < 7000)
+    {
+      //dataPublisher2.publish(sendMsg_Odometry(j));
+      dataPublisher2.publish(sendMultiMsg_Odometry(j, n));
+    }
+    j++;
+    ros::spinOnce(); // check for incoming messages
+    rate.sleep();
+  }
+
+  return EXIT_SUCCESS;
+}
+
+
+/*int main(int argc, char **argv)
 {
   readData();
   ros::init(argc, argv, "data_reader"); //node name "data_reader"
@@ -257,3 +480,4 @@ int main(int argc, char **argv)
 
   return EXIT_SUCCESS;
 }
+*/

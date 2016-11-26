@@ -1,14 +1,12 @@
 #include "ros/ros.h"
 #include "../include/data_reader.h"
-#include "slam_project/Robot_GroundTruth.h"
-#include "slam_project/Robot_Odometry.h"
 #include "slam_project/requestBarcode.h"
 
 void publishMsg_callback3(const slam_project::Robot_GroundTruth& subMsg){
 	cout<<"time: "<<subMsg.time<<endl;
 }
 
-void publishMsg_callback2(const slam_project::Robot_Odometry& subMsg){
+void publishMsg_callback2(const slam_project::Robot_Odometry_Single& subMsg){
 //	cout<<"time: "<<subMsg.time<<" "<<subMsg.forward_velocity<<endl;
 	int len = subMsg.num;
 	if (len>1)
