@@ -4,20 +4,17 @@
 
 #include "utils/eigenmvn.h"
 
-DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map) :
+DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map) :
 particles_(num_particles), initial_w_(initial_w), map_(&map)
 {
   for (const RobotModelInterface & r : robots)
   {
     robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
   }
-  assert(initial_x.size() == 1); // only robot 1's initial pose is known
+
   for (size_t i = 0; i < num_particles; i++)
   {
-    for (size_t j = 0; j < initial_x.size(); j++)
-    {
-      particles_[i].x_[robots_[j]->getId()] = initial_x[j];
-    }
+    particles_[i].x_[robots_[0]->getId()] = initial_x;
     particles_[i].cov_ = initial_cov;
   }
 
