@@ -9,7 +9,7 @@
 #include "particle.h"
 #include "robot_models/mobile_robot_2dmodel.h"
 #include "map_models/interface_map_model.h"
-
+#include <sstream>
 
 // Multi-robot SLAM with known initial poses
 class MultiFastSlam

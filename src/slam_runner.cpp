@@ -10,11 +10,13 @@
 #include "slam_project/requestBarcode.h"
 #include "slam_project/Robot_GroundTruth.h"
 #include "slam_project/Robot_Odometry_Single.h"
+#include "slam_project/Robot_GroundTruth_Multi.h"
 #include "std_msgs/Float64MultiArray.h"
 #include "../include/data_reader.h"
 
 #include "../include/utils/eigenmvn.h"
-
+#include <ros/package.h>
+std::vector<std::vector<groundtruth> > multirobot_groundtruth;
 class SlamRunner
 {
 public:
@@ -25,7 +27,7 @@ public:
   ros::Publisher dataPublisher;
   void frameCallback(const slam_project::Robot_Odometry_Single &msg);
   void multiFrameCallback(const slam_project::Robot_Odometry &msg); //multi-robot
-
+  void readGroundtruth(const int index, const string path);
 private:
   FastSlam fast_slam_; // TODO: polymorphism for SLAM algorithm?
   FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
@@ -35,7 +37,12 @@ private:
   
   size_t frame_count_;
   double last_time_;
+
+
+
 };
+
+
 
 SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, MapModelInterface &map)
 : 
@@ -192,10 +199,38 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry_Single &msg)
   dataPublisher.publish(msg2);
 }
 
+
+
+//read groundtruth data
+void
+SlamRunner::readGroundtruth(const int index, const string path_groundtruth){
+  ifstream file3(path_groundtruth);
+  ifstream file3_2(path_groundtruth);
+  int line_count3 = 0;
+  string line3;
+  double g_time, g_x, g_y, g_orientation;
+  groundtruth g_cur;
+  while (getline(file3, line3))
+    ++line_count3;
+  for (int i = 0; i < line_count3; i++)
+  {
+    file3_2 >> g_time >> g_x >> g_y>>g_orientation;
+    g_cur.id = i;
+    g_cur.time = g_time;
+    g_cur.x = g_x;
+    g_cur.y = g_y;
+    g_cur.orientation = g_orientation;
+    multirobot_groundtruth[index].push_back(g_cur);
+  }
+  file3.close();
+  file3_2.close();
+}
+
+
 void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
 {  
   // TODO: multi-robot data
-
+  cout<<msg.forward_velocity[0]<<endl;
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
   for (int i = 0; i < msg.robot_num; i++)
@@ -216,6 +251,7 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
     multi_z.push_back(z);
   }
   
+
 //  std::cout << "ggg msg.time.size() " << msg.time.size() << std::endl;
 //  std::cout << "ggg msg.time[0] " << msg.time[0] << std::endl;
 //  std::cout << "ggg frame_count_ " << frame_count_ << std::endl;
@@ -276,11 +312,23 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
     }
     
   }
-      
   // TODO: multi robot
-  slam_project::Robot_GroundTruth msg2;
-  msg2.x = average_x[0][0];
-  msg2.y = average_x[0][1];
+  int cur_id = msg.id;
+  int robot_num = multirobot_groundtruth.size();
+  slam_project::Robot_GroundTruth_Multi msg2;
+  msg2.rnum = robot_num;
+  msg2.x.resize(robot_num);
+  msg2.y.resize(robot_num);
+  msg2.rx.resize(robot_num);
+  msg2.ry.resize(robot_num);
+  for (int i=0; i<robot_num; i++){
+    msg2.x[i] = average_x[i][0];
+    msg2.y[i] = average_x[i][1]; 
+  }
+  for (int i=0; i<robot_num; i++){
+    msg2.rx[i] = multirobot_groundtruth[i][cur_id].x;
+    msg2.ry[i] = multirobot_groundtruth[i][cur_id].y;
+  }
 
   msg2.num = features_average_x.size(); //TODO
   msg2.landmark_x.clear();
@@ -290,6 +338,7 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
   msg2.landmark_x.resize(msg2.num); //TODO
   msg2.landmark_y.resize(msg2.num);
   msg2.landmark_cov.resize(msg2.num);
+
 
   int i = 0;
 //  cout << "map size: " << average_features.size() << endl;
@@ -326,7 +375,6 @@ void SlamRunner::multiFrameCallback(const slam_project::Robot_Odometry &msg)
 
     i++;
   }
-
   dataPublisher.publish(msg2);
 }
 
@@ -394,6 +442,10 @@ int main(int argc, char **argv)
   
 //  std::cout.precision(20);
   
+  //read groundtruth data
+  
+
+
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
@@ -440,10 +492,23 @@ int main(int argc, char **argv)
                  0, 0, 0.000001;
   SlamRunner slam_runner(num_particles, std::vector<Eigen::VectorXd>(robots.size(), initial_x), initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
 
+  //groundtruth
+  int robot_num = 2;
+  multirobot_groundtruth.resize(robot_num);
+  string path = ros::package::getPath("slam_project");
+  for (int i=1; i<=robot_num; i++){
+    stringstream ss; 
+    ss << i;
+    string str = ss.str();
+    string path_groundtruth = path+ "/data/newRobot" + str + "_Groundtruth.txt";
+    slam_runner.readGroundtruth(i-1, path_groundtruth);
+  }
+
+
   //ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::frameCallback, &slam_runner);
   ros::Subscriber frame_sub = node.subscribe("/publishMsg2", 100000, &SlamRunner::multiFrameCallback, &slam_runner);  
-  slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth>("/publishMsg4", 100000);
-
+  slam_runner.dataPublisher = node.advertise<slam_project::Robot_GroundTruth_Multi>("/publishMsg4", 100000);
+  int count =0;
   while (ros::ok())
   {
     ros::spinOnce(); // check for incoming messages

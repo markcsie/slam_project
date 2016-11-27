@@ -16,6 +16,7 @@ find_package(Eigen3 REQUIRED)
 add_message_files(
   FILES
   Robot_GroundTruth.msg
+  Robot_GroundTruth_Multi.msg
   Robot_Odometry.msg
   Robot_Measure.msg
   Robot_Odometry_Single.msg

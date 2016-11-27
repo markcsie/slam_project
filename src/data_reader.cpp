@@ -33,7 +33,7 @@ void readMultiData(int n){
     string path_groundtruth = path+ "/data/newRobot" + str + "_Groundtruth.txt";
     readMeasurement(i-1, path_measure);
     readOdometry(i-1, path_odometry);
-    //readGroundtruth(i, path_groundtruth);
+    //readGroundtruth(i-1, path_groundtruth);
   }
 }
 
@@ -124,7 +124,7 @@ slam_project::Robot_Odometry sendMultiMsg_Odometry(int j, int n)
   msg_odometry.angular_velocity.resize(n);
   msg_odometry.measure.resize(n);
   msg_odometry.robot_num = n;
-
+  msg_odometry.id = j;
   for (int i=0; i<n; i++){
     msg_odometry.time[i] = multirobot_odometry[i][j].time;
     msg_odometry.forward_velocity[i] = multirobot_odometry[i][j].forward_velocity;

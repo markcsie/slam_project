@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include "slam_project/Robot_GroundTruth.h"
+#include "slam_project/Robot_GroundTruth_Multi.h"
 #include "slam_project/Robot_Odometry.h"
 #include "slam_project/Robot_Odometry_Single.h"
 #include "slam_project/Robot_Measure.h"
