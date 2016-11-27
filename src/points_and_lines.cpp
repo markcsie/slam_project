@@ -42,8 +42,11 @@ void readlandmarkGroundTruth()
   double l_x, l_y, l_xstd_dev, l_ystd_dev;
   int l_subject;
   landmark l_cur;
-  while (getline(file5, line5))
-    ++line5_count;
+  //TODO
+/*  while (getline(file5, line5))
+    ++line5_count;*/
+  line5_count=15;
+  cout<<"line5_count: "<<line5_count<<endl;
   for (int i = 0; i < line5_count; i++)
   {
     file5_2 >> l_subject >> l_x >> l_y >> l_xstd_dev>>l_ystd_dev;
@@ -178,6 +181,7 @@ int main(int argc, char** argv)
 {
   cout<<"start: "<<endl;
   readlandmarkGroundTruth();
+  cout<<"start1.5 "<<endl;
   ros::init(argc, argv, "points_and_lines");
 
   cout<<"start2"<<endl;
@@ -250,8 +254,8 @@ int main(int argc, char** argv)
     multi_path.markers[i].action = visualization_msgs::Marker::ADD;
     multi_path.markers[i].type = visualization_msgs::Marker::POINTS;
 
-    multi_path.markers[i].scale.x = 0.1;
-    multi_path.markers[i].scale.y = 0.1;
+    multi_path.markers[i].scale.x = 0.05;
+    multi_path.markers[i].scale.y = 0.05;
     multi_path.markers[i].color.r = 0.8f;
     multi_path.markers[i].color.a = 0.5;
 
@@ -262,8 +266,8 @@ int main(int argc, char** argv)
     multi_slam_path.markers[i].action = visualization_msgs::Marker::ADD;
     multi_slam_path.markers[i].type = visualization_msgs::Marker::POINTS;
 
-    multi_slam_path.markers[i].scale.x = 0.1;
-    multi_slam_path.markers[i].scale.y = 0.1;
+    multi_slam_path.markers[i].scale.x = 0.05;
+    multi_slam_path.markers[i].scale.y = 0.05;
     multi_slam_path.markers[i].color.g = 0.8f;
     multi_slam_path.markers[i].color.a = 0.5;
   }
