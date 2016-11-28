@@ -54,7 +54,7 @@ int DecMultiFastSlam::getRobotIndex(const int &id)
 
 void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
-  assert(u.size() == robots_.size() && u.size() == features.size());
+//  assert(u.size() == robots_.size() && u.size() == features.size());
   
   std::vector<double> forward_weights(particles_.size(), 1.0);
   for (size_t i = 0; i < u.size(); i++) {
@@ -77,9 +77,12 @@ void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std:
   {
     // TODO: if the stack is empty
     // TODO: -u? check if z is aligned???
-    backward_weights = updateRobot(robots_[i], -virtual_robots_u_[i].top(), virtual_robots_z_[i].top()); 
-    virtual_robots_z_[i].pop();
-    virtual_robots_u_[i].pop();
+    if (virtual_robots_u_[i].size() > 0 && virtual_robots_z_[i].size() > 0)
+    {
+      backward_weights = updateRobot(virtual_robots_[i], -virtual_robots_u_[i].top(), virtual_robots_z_[i].top());
+      virtual_robots_z_[i].pop();
+      virtual_robots_u_[i].pop();
+    }
   }
 
   // resampling
@@ -127,9 +130,15 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
           const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
           for (Particle &p : particles_)
           {
-            // initialize the state of the virtual robot
-            p.x_[-id] = robot->inverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
-          }
+            // initialize the state of the causal and virtual robot
+            Eigen::VectorXd position = robot->inverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
+            // TODO: dimension
+            Eigen::VectorXd pose(robot->getDim());
+            pose << position[0], position[1], Utils::sampleUniform(-M_PI, M_PI); // Random orientation for each particle
+            
+            p.x_[id] = pose;
+            p.x_[-id] = pose;
+          }   
         }
         // ignore the measurement if the robot has been seen before
       }
@@ -140,7 +149,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
         {
           if (i == 0)
           {
-            weights[j] *= updateParticle(robot, particles_[j], u, feature);
+            weights[j] *= updateParticle(robot, particles_[j], u, feature); 
           }
           else
           {
@@ -150,7 +159,6 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
       }
     }
   }
-  
   return weights;
 }
 

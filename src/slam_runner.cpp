@@ -105,7 +105,9 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
   {
     for (size_t i = 0; i < num_robots; i++)
     {
-      average_x[i] += p.x_.find(robots_[i]->getId())->second;
+      auto it = p.x_.begin();
+      std::advance(it, i);
+      average_x[i] += it->second;
     }
 
     for (const auto &it : p.features_)
@@ -120,12 +122,11 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
       }
     }
   }
-
+  
   for (size_t i = 0; i < num_robots; i++)
   {
     average_x[i] /= num_particles;
   }
-
 
   for (const auto &it : features_average_x)
   {
@@ -265,18 +266,15 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   else
   {
     // Centralized
-    multi_fast_slam_.process(multi_u, multi_z);
-//    std::cout << "ggg" << std::endl;
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles(), multi_u.size());
+//    multi_fast_slam_.process(multi_u, multi_z);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles(), multi_u.size());
     
-//    dec_multi_fast_slam_.process(multi_u, multi_z);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, dec_multi_fast_slam_.getParticles());
+    dec_multi_fast_slam_.process(multi_u, multi_z);
+    std::vector<Particle> particles = dec_multi_fast_slam_.getParticles();
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, particles, particles[0].x_.size());
 
     dataPublisher.publish(path_msg);
-
-    
   }
-
 }
 
 int main(int argc, char **argv)
