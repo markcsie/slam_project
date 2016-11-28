@@ -66,11 +66,13 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
     //groundtruth
     for (int i=0; i<robot_num; i++){
+
       p.x = subMsg.rx[i];
       p.y = subMsg.ry[i];
+
       multi_path.markers[i].points.clear();
       multi_path.markers[i].points.push_back(p);
-      multi_path.markers[i].id = i*100000+k;
+      multi_path.markers[i].id = robot_num*100000+k;
     }
     marker_pub_path.publish(multi_path);     
 
@@ -88,7 +90,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       p.y = subMsg.y[i];
       multi_slam_path.markers[i].points.clear();
       multi_slam_path.markers[i].points.push_back(p);
-      multi_slam_path.markers[i].id = (i+2)*100000+k;
+      multi_slam_path.markers[i].id = (i+robot_num)*100000+k;
     }
     marker_pub_path.publish(multi_slam_path);     
 
