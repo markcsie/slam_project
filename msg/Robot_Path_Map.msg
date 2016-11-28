@@ -1,5 +1,6 @@
 # TODO: Pose2D and PoseWithCovariance or PoseWithCovarianceStamped
 float64[] time
+int16[] robot_id
 float64[] x
 float64[] y
 float64[] orientation
@@ -13,4 +14,3 @@ float64[] rx
 float64[] ry
 float64[] rorientation
 int32 id
-int16 rnum

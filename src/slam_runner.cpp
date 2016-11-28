@@ -35,6 +35,7 @@ private:
   DecMultiFastSlam dec_multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
   
   std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
+  size_t msg_robot_num_;
 
   size_t frame_count_;
   double last_time_;
@@ -51,11 +52,12 @@ multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map),
 dec_multi_fast_slam_(num_particles, initial_x[0], initial_cov, initial_w, robots, map),
 robots_(robots),  
 frame_count_(0),
-last_time_(0.0)
+last_time_(0.0),
+msg_robot_num_(0)
 { 
 }
 
-SlamRunner::SlamRunner(const SlamRunner& other)
+SlamRunner::SlamRunner(const SlamRunner& other) // TODO:
 :
 fast_slam_(other.fast_slam_), fast_slam2_(other.fast_slam2_),
 multi_fast_slam_(other.multi_fast_slam_), dec_multi_fast_slam_(other.dec_multi_fast_slam_),
@@ -149,25 +151,26 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     {
       features_average_cov[it.first] = particles[0].features_.find(it.first)->second.covariance_;
     }
-
   }
   
-  int cur_id = frame_id;
   slam_project::Robot_Path_Map msg2;
-  msg2.rnum = num_robots;
   msg2.x.resize(num_robots);
   msg2.y.resize(num_robots);
-  msg2.rx.resize(num_robots);
-  msg2.ry.resize(num_robots);
-  for (int i = 0; i < num_robots; i++)
+  for (int i = 0; i < msg2.x.size(); i++)
   {
+    auto it = particles[0].x_.begin();
+    std::advance(it, i);
+    msg2.robot_id[i] = it->first;
     msg2.x[i] = average_x[i][0];
     msg2.y[i] = average_x[i][1];
   }
-  for (int i = 0; i < num_robots; i++)
+  
+  msg2.rx.resize(msg_robot_num_);
+  msg2.ry.resize(msg_robot_num_);
+  for (int i = 0; i < msg2.rx.size(); i++)
   {
-    msg2.rx[i] = multirobot_groundtruth[i][cur_id].x;
-    msg2.ry[i] = multirobot_groundtruth[i][cur_id].y;
+    msg2.rx[i] = multirobot_groundtruth[i][frame_id].x;
+    msg2.ry[i] = multirobot_groundtruth[i][frame_id].y;
   }
   
   msg2.num = features_average_x.size(); //TODO
@@ -224,6 +227,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   // TODO: multi-robot data
   //  cout << msg.forward_velocity[0] << endl;
   assert(msg.robot_num <= robots_.size());
+  msg_robot_num_ = msg.robot_num;
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
 //  std::cout << "ggg msg.robot_num " << msg.robot_num << std::endl;
