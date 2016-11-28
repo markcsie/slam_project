@@ -39,7 +39,7 @@ private:
   size_t frame_count_;
   double last_time_;
 
-  slam_project::Robot_Path_Map postProcess(const int &frame_id, const std::vector<Particle> &particles);
+  slam_project::Robot_Path_Map postProcess(const int &frame_id, const std::vector<Particle> &particles, const size_t &num_robots);
 
 };
 
@@ -93,10 +93,9 @@ SlamRunner::readGroundtruth(const int index, const string path_groundtruth)
   file3_2.close();
 }
 
-slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const std::vector<Particle> &particles)
+slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const std::vector<Particle> &particles, const size_t &num_robots)
 {
   const size_t num_particles = particles.size();
-  const size_t num_robots = particles[0].x_.size();
 //  std::cout << "ggg num_robots " << num_robots << std::endl;
 
   std::vector<Eigen::VectorXd> average_x(num_robots, Eigen::VectorXd::Zero(3));
@@ -259,7 +258,7 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
 //    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
     
     fast_slam2_.process(multi_u[0], multi_z[0]);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles(), 1);
     
     dataPublisher.publish(path_msg);
   }
@@ -267,7 +266,8 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   {
     // Centralized
     multi_fast_slam_.process(multi_u, multi_z);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles());
+//    std::cout << "ggg" << std::endl;
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles(), multi_u.size());
     
 //    dec_multi_fast_slam_.process(multi_u, multi_z);
 //    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, dec_multi_fast_slam_.getParticles());

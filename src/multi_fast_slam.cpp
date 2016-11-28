@@ -40,7 +40,7 @@ Particle MultiFastSlam::getParticle(const size_t &i)
 
 void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
-  assert(u.size() == robots_.size() && u.size() == features.size());
+//  assert(u.size() == robots_.size() && u.size() == features.size());
   std::vector<double> weights;
   for (size_t i = 0; i < u.size(); i++)
   {

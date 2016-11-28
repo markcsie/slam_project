@@ -328,7 +328,7 @@ bool add(slam_project::requestBarcode::Request &req,
 //multi robot
 int main(int argc, char **argv)
 {
-  int n = 5; //number of robots
+  int n = 3; //number of robots
   readData();
   readMultiData(n);
 
