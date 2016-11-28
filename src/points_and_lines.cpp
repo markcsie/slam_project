@@ -58,7 +58,7 @@ void readlandmarkGroundTruth()
   file5_2.close();
 }
 
-void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
+void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
   
     k++;

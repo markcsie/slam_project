@@ -24,6 +24,7 @@ public:
 private:
   std::shared_ptr<const RobotModelInterface> robot_;
   std::shared_ptr<const MapModelInterface> map_;
+  int robot_id_;
 
   double initial_w_;
   std::vector<Particle> particles_;

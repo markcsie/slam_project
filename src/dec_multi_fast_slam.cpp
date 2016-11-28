@@ -34,12 +34,12 @@ size_t DecMultiFastSlam::getNumParticles()
   return particles_.size();
 }
 
-std::vector<MultiRobotParticle> DecMultiFastSlam::getParticles()
+std::vector<Particle> DecMultiFastSlam::getParticles()
 {
   return particles_;
 }
 
-MultiRobotParticle DecMultiFastSlam::getParticle(const size_t &i)
+Particle DecMultiFastSlam::getParticle(const size_t &i)
 {
   return particles_[i];
 }
@@ -91,7 +91,7 @@ void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std:
     weights[i] = forward_weights[i] * backward_weights[i];
   }
   
-  std::vector<MultiRobotParticle> new_particles(particles_.size());
+  std::vector<Particle> new_particles(particles_.size());
   for (size_t i = 0; i < particles_.size(); i++)
   {
     new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
@@ -107,7 +107,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
   const int robot_id = robot->getId();
   if (num_measurements == 0)
   {
-    for (MultiRobotParticle &p : particles_)
+    for (Particle &p : particles_)
     {
       p.x_[robot_id] = robot->samplePose(p.x_[robot_id], u); // x_t ~ p(x_t| x_{t-1}, u_t)
     }
@@ -126,7 +126,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
         {
           virtual_robots_.push_back(robots_[robot_index]);
           const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
-          for (MultiRobotParticle &p : particles_)
+          for (Particle &p : particles_)
           {
             // initialize the state of the virtual robot
             p.x_[-id] = robot->inverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
@@ -156,7 +156,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
 }
 
 // TODO: check if z_t is after applying u_t????
-double DecMultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
+double DecMultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   double weight = initial_w_;
 

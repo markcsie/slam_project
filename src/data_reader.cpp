@@ -307,81 +307,6 @@ void readData()
 
 }
 
-slam_project::Robot_GroundTruth sendMsg_GroundTruth(int i)
-{
-  slam_project::Robot_GroundTruth msg;
-
-  if (i < robot_groundtruth.size())
-  {
-    msg.time = robot_groundtruth[i].time;
-    msg.x = robot_groundtruth[i].x;
-    msg.y = robot_groundtruth[i].y;
-    msg.orientation = robot_groundtruth[i].orientation;
-    i++;
-  }
-  return msg;
-}
-
-slam_project::Robot_Odometry_Single sendMsg_Odometry(int j)
-{
-
-  slam_project::Robot_Odometry_Single msg_odometry;
-
-  msg_odometry.time = robot_odometry[j].time;
-  msg_odometry.forward_velocity = robot_odometry[j].forward_velocity;
-  msg_odometry.angular_velocity = robot_odometry[j].angular_veolocity;
-
-  int count = 0;
-  vector<int> msg_subject;
-  vector<double> msg_range;
-  vector<double> msg_bearing;
-  //only robot1's data is transmitted.
-  if (robot_measurement[k].time == msg_odometry.time)
-  {
-
-    while (robot_measurement[k].time == msg_odometry.time)
-    {
-      if (robot_measurement[k].subject != subject[2] &&
-              robot_measurement[k].subject != subject[3] &&
-              robot_measurement[k].subject != subject[4] &&
-              robot_measurement[k].subject != subject[5])
-      {
-
-        msg_subject.push_back(robot_measurement[k].subject);
-        msg_range.push_back(robot_measurement[k].range);
-        msg_bearing.push_back(robot_measurement[k].bearing);
-        count++;
-      }
-      k++;
-    }
-
-  }
-
-  if (count)
-  {
-    msg_odometry.subject.resize(count);
-    msg_odometry.range.resize(count);
-    msg_odometry.bearing.resize(count);
-    for (int i = 0; i < count; i++)
-    {
-      msg_odometry.subject[i] = msg_subject[i];
-      msg_odometry.range[i] = msg_range[i];
-      msg_odometry.bearing[i] = msg_bearing[i];
-    }
-
-  }
-  msg_odometry.num = count;
-
-
-
-  cout << "j: " << j << " time: " << msg_odometry.time << " " <<
-          "num: " << msg_odometry.num << " msg_odometry.forward_velocity " <<
-          msg_odometry.forward_velocity << " msg_odometry.angular_velocity " << msg_odometry.angular_velocity << endl;
-  /*dataPublisher2.publish(msg_odometry);*/
-
-  return msg_odometry;
-}
-
 bool add(slam_project::requestBarcode::Request &req,
         slam_project::requestBarcode::Response &res)
 {
@@ -430,7 +355,7 @@ int main(int argc, char **argv)
     cout<<j<<endl;
     if (j < 7000)
     {
-      //dataPublisher2.publish(sendMsg_Odometry(j));
+//      dataPublisher2.publish(sendMsg_Odometry(j));
       dataPublisher2.publish(sendMultiMsg_Odometry(j, n));
     }
     j++;

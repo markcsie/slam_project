@@ -15,11 +15,9 @@ find_package(Eigen3 REQUIRED)
 ## Declare ROS messages and services
 add_message_files(
   FILES
-  Robot_GroundTruth.msg
-  Robot_GroundTruth_Multi.msg
+  Robot_Path_Map.msg
   Robot_Odometry.msg
   Robot_Measure.msg
-  Robot_Odometry_Single.msg
 )
 add_service_files(
   FILES
@@ -61,16 +59,6 @@ include_directories(include
 
 link_directories(
    ${catkin_LIBRARY_DIRS}
-)
-
-add_executable(data_receive_node
-  src/data_receive.cpp
-)
-
-
-
-target_link_libraries(data_receive_node
-  ${catkin_LIBRARIES}
 )
 
 add_executable(data_reader_node 

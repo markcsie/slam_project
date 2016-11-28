@@ -3,12 +3,12 @@
 #include <iostream>
 
 FastSlam::FastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
-particles_(num_particles), initial_w_(initial_w), robot_(&robot), map_(&map)
+particles_(num_particles), initial_w_(initial_w), robot_(&robot), robot_id_(robot_->getId()), map_(&map)
 {
   assert(initial_x.size() >= 1);
   for (size_t i = 0; i < num_particles; i++)
   {
-    particles_[i].x_ = initial_x[0];
+    particles_[i].x_[robot_id_] = initial_x[0];
     particles_[i].cov_ = initial_cov;
   }
 }
@@ -46,7 +46,7 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
     for (Particle &p : particles_)
     {
       //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
-      p.x_ = robot_->samplePose(p.x_, u); // x_t ~ p(x_t| x_{t-1}, u_t)
+      p.x_[robot_id_] = robot_->samplePose(p.x_[robot_id_], u); // x_t ~ p(x_t| x_{t-1}, u_t)
       //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
     }
   }
@@ -89,20 +89,20 @@ double FastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eig
   const int feature_id = feature[0];
   const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
 
-  p.x_ = robot_->samplePose(p.x_, u); // x_t ~ p(x_t| x_{t-1}, u_t)
+  p.x_[robot_id_] = robot_->samplePose(p.x_[robot_id_], u); // x_t ~ p(x_t| x_{t-1}, u_t)
 
   auto iter = p.features_.find(feature_id);
   if (iter == p.features_.end()) // first time seeing the feature, do initialization 
   {
-    p.features_[feature_id].mean_ = robot_->inverseMeasurement(map_, p.x_, z); // mean_t = h^{-1}(x_t, z_t))
-    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_);
+    p.features_[feature_id].mean_ = robot_->inverseMeasurement(map_, p.x_[robot_id_], z); // mean_t = h^{-1}(x_t, z_t))
+    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id_]);
     p.features_[feature_id].covariance_ = H.inverse() * robot_->getQt() * H.inverse().transpose();
     weight = initial_w_;
   }
   else
   {
-    Eigen::VectorXd z_hat = robot_->predictMeasurement(map_, p.features_[feature_id].mean_, p.x_); // h(mean_{t-1}, x)
-    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_);
+    Eigen::VectorXd z_hat = robot_->predictMeasurement(map_, p.features_[feature_id].mean_, p.x_[robot_id_]); // h(mean_{t-1}, x)
+    Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id_]);
     Eigen::MatrixXd Q = H * p.features_[feature_id].covariance_ * H.transpose() + robot_->getQt();
     Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H.transpose() * Q.inverse(); // Kalman gain
     p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean

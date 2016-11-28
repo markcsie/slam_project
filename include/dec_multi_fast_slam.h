@@ -20,8 +20,8 @@ public:
   virtual ~DecMultiFastSlam();
 
   size_t getNumParticles();
-  std::vector<MultiRobotParticle> getParticles();
-  MultiRobotParticle getParticle(const size_t &i);
+  std::vector<Particle> getParticles();
+  Particle getParticle(const size_t &i);
   void process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features);
 private:
   std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
@@ -33,13 +33,13 @@ private:
   std::shared_ptr<const MapModelInterface> map_;
 
   double initial_w_;
-  std::vector<MultiRobotParticle> particles_;
+  std::vector<Particle> particles_;
 
   int getRobotIndex(const int &id);
   
   std::vector<double> updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
 
-  double updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
+  double updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
   
 };
 

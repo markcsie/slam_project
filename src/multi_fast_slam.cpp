@@ -32,17 +32,12 @@ MultiFastSlam::~MultiFastSlam()
 {
 }
 
-size_t MultiFastSlam::getNumParticles()
-{
-  return particles_.size();
-}
-
-std::vector<MultiRobotParticle> MultiFastSlam::getParticles()
+std::vector<Particle> MultiFastSlam::getParticles()
 {
   return particles_;
 }
 
-MultiRobotParticle MultiFastSlam::getParticle(const size_t &i)
+Particle MultiFastSlam::getParticle(const size_t &i)
 {
   return particles_[i];
 }
@@ -59,7 +54,7 @@ void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::ve
 
   // resampling
   assert(weights.size() == particles_.size());
-  std::vector<MultiRobotParticle> new_particles(particles_.size());
+  std::vector<Particle> new_particles(particles_.size());
   for (size_t i = 0; i < particles_.size(); i++)
   {
     new_particles[i] = particles_[Utils::sampleDiscrete(weights)];
@@ -75,7 +70,7 @@ std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const Robot
   const int robot_id = robot->getId();
   if (num_measurements == 0)
   {
-    for (MultiRobotParticle &p : particles_)
+    for (Particle &p : particles_)
     {
       p.x_[robot_id] = robot->samplePose(p.x_[robot_id], u); // x_t ~ p(x_t| x_{t-1}, u_t)
     }
@@ -102,7 +97,7 @@ std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const Robot
 }
 
 // TODO: check if z_t is after applying u_t????
-double MultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, MultiRobotParticle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
+double MultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   double weight = initial_w_;
 
