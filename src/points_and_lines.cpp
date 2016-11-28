@@ -8,25 +8,22 @@
 #include <Eigen/Eigenvalues> 
 
 /*
-points: robot groundtruth
-points2: slam robot groundtruth
 points3: landmark groundtruth
 points4: slam landmark groundtruth
 ellipse: particle ellipse
+multi_path: groundtruth
+multi_slam_path: result path from slam
 */
 
-vector<groundtruth> robot_groundtruth;
 vector<landmark> landmark_groundtruth;
 int k = 0;
 geometry_msgs::Point p;
-ros::Publisher marker_pub;
-ros::Publisher marker_pub2;
 ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
 ros::Publisher marker_pub5;
 ros::Publisher marker_pub_path;
 ros::Publisher marker_pub_slam_path;
-visualization_msgs::Marker points, line_strip, line_list, arrow, points2, points3, points4;
+visualization_msgs::Marker points3, points4;
 visualization_msgs::MarkerArray ellipse;
 visualization_msgs::MarkerArray multi_path;  //groundtruth
 visualization_msgs::MarkerArray multi_slam_path; //result from slam
@@ -63,13 +60,11 @@ void readlandmarkGroundTruth()
 
 void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
 {
-  if (k < 7000 /*new_robot_groundtruth.size()*/)
-  {
-
+  
     k++;
-
     int robot_num = subMsg.rnum;
 
+    //groundtruth
     for (int i=0; i<robot_num; i++){
       p.x = subMsg.rx[i];
       p.y = subMsg.ry[i];
@@ -86,6 +81,8 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
       return;
     }
 
+
+    //slam path
     for (int i=0; i<robot_num; i++){
       p.x = subMsg.x[i];
       p.y = subMsg.y[i];
@@ -95,7 +92,7 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
     }
     marker_pub_path.publish(multi_slam_path);     
 
-
+    //slam landmark and ellipse
     int len = subMsg.num;
     cout << "*******" << subMsg.num << endl;
     int valid_len = 0, valid_i=0;
@@ -135,38 +132,21 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
    //TODO   std::cout << "ggg" << std::endl;
       // TODO: draw an ellipse with these two axes
 
-      ellipse.markers[valid_i].header.frame_id = "map";
-      ellipse.markers[valid_i].header.stamp = ros::Time::now();
-      ellipse.markers[valid_i].ns = "points_and_lines";
-      ellipse.markers[valid_i].action = visualization_msgs::Marker::ADD;
-      ellipse.markers[valid_i].type = visualization_msgs::Marker::CYLINDER;
-
       double angle = std::atan(axis1[1] / axis1[0]);
 
       ellipse.markers[valid_i].pose.orientation.x = std::cos(angle / 2);
       ellipse.markers[valid_i].pose.orientation.y = std::sin(angle / 2);
-      ellipse.markers[valid_i].pose.orientation.z = 0;
-      ellipse.markers[valid_i].pose.orientation.w = 0;
 
       //draw ellipse 
       ellipse.markers[valid_i].pose.position.x = p.x;
       ellipse.markers[valid_i].pose.position.y = p.y;
-      ellipse.markers[valid_i].pose.position.z = 0;
 
 
       // Set the scale of the marker -- 1x1x1 here means 1m on a side
       ellipse.markers[valid_i].scale.x = axis1.norm();  //TODO 500
       ellipse.markers[valid_i].scale.y = axis2.norm();  //TODO 500
-      ellipse.markers[valid_i].scale.z = 0;
 
-      /*cout<<"valid id: "<<valid_i<<"lenght of axis1: "<<axis1.norm()<<endl;
-      cout<<"valid id: "<<valid_i<<"lenght of axis2: "<<axis2.norm()<<endl;*/
-      ellipse.markers[valid_i].color.r = 0.0f;
-      ellipse.markers[valid_i].color.g = 1.0f;
-      ellipse.markers[valid_i].color.b = 0.0f;
-      ellipse.markers[valid_i].color.a = 1.0;
       
-      ellipse.markers[valid_i].id = valid_i; //must add id, or there will be only one marker
       valid_i++;
 
     }
@@ -174,61 +154,20 @@ void publishMsg_callback(const slam_project::Robot_GroundTruth_Multi& subMsg)
 
     marker_pub4.publish(points4);
     marker_pub5.publish(ellipse);
-  }
+  
 }
 
-int main(int argc, char** argv)
-{
-  cout<<"start: "<<endl;
-  readlandmarkGroundTruth();
-  cout<<"start1.5 "<<endl;
-  ros::init(argc, argv, "points_and_lines");
 
-  cout<<"start2"<<endl;
-  ros::NodeHandle n;
-  marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 100000);
-  marker_pub2 = n.advertise<visualization_msgs::Marker>("visualization_marker2", 100000);
-  marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
-  marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 100000);
-  //ellipse
-  marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100000);
-  //multi_path
-  marker_pub_path = n.advertise<visualization_msgs::MarkerArray>("groundtruth_path", 100000);
-  marker_pub_slam_path = n.advertise<visualization_msgs::MarkerArray>("slam_path", 100000);
-    
-
-  cout << "aaa" << endl;
-  ros::Subscriber subscriber = n.subscribe("/publishMsg4", 100000, publishMsg_callback);
-
+void init_marker(){
   float f = 0.0;
+  points4.header.frame_id = points3.header.frame_id = "map";
+  points4.header.stamp = points3.header.stamp = ros::Time::now();
+  points4.ns = points3.ns  = "points_and_lines";
+  points4.action = points3.action = visualization_msgs::Marker::ADD;
+  points4.pose.orientation.w = points3.pose.orientation.w = 1.0;
 
-  //  visualization_msgs::Marker points, line_strip, line_list, arrow, points2;
-  points4.header.frame_id = points3.header.frame_id = points2.header.frame_id = points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
-  points4.header.stamp = points3.header.stamp = points2.header.stamp = points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
-  points4.ns = points3.ns = points2.ns = points.ns = line_strip.ns = line_list.ns = "points_and_lines";
-  points4.action = points3.action = points2.action = points.action = line_strip.action = line_list.action = visualization_msgs::Marker::ADD;
-  points4.pose.orientation.w = points3.pose.orientation.w = points2.pose.orientation.w = points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
-
-  points4.type = points3.type = points2.type = points.type = visualization_msgs::Marker::POINTS;
+  points4.type = points3.type = visualization_msgs::Marker::POINTS;
   
-  //lifetime
-  // TODO: default is ros::Duration()?
-  points.lifetime = ros::Duration();  // A value of ros::Duration() means never to auto-delete
-  points2.lifetime = ros::Duration();
-
-  // POINTS markers use x and y scale for width/height respectively
-  points.scale.x = 0.01;
-  points.scale.y = 0.01;
-
-  // Points are green
-  points.color.g = 1.0f;
-  points.color.a = 1.0;
-
-  points2.scale.x = 0.01;
-  points2.scale.y = 0.01;
-
-  points2.color.r = 1.0f;
-  points2.color.a = 1.0;
 
   points3.scale.x = 0.1;
   points3.scale.y = 0.1;
@@ -243,7 +182,6 @@ int main(int argc, char** argv)
   points4.color.a = 0.5;
 
   int robot_num = 2;
-  cout<<"aaa"<<endl;
   multi_path.markers.resize(robot_num);
   multi_slam_path.markers.resize(robot_num);
   for (int i=0; i<robot_num; i++){
@@ -253,6 +191,8 @@ int main(int argc, char** argv)
     multi_path.markers[i].ns = "points_and_lines";
     multi_path.markers[i].action = visualization_msgs::Marker::ADD;
     multi_path.markers[i].type = visualization_msgs::Marker::POINTS;
+    multi_path.markers[i].lifetime = ros::Duration();
+     // A value of ros::Duration() means never to auto-delete
 
     multi_path.markers[i].scale.x = 0.05;
     multi_path.markers[i].scale.y = 0.05;
@@ -265,6 +205,7 @@ int main(int argc, char** argv)
     multi_slam_path.markers[i].ns = "points_and_lines";
     multi_slam_path.markers[i].action = visualization_msgs::Marker::ADD;
     multi_slam_path.markers[i].type = visualization_msgs::Marker::POINTS;
+    multi_slam_path.markers[i].lifetime = ros::Duration();
 
     multi_slam_path.markers[i].scale.x = 0.05;
     multi_slam_path.markers[i].scale.y = 0.05;
@@ -272,23 +213,74 @@ int main(int argc, char** argv)
     multi_slam_path.markers[i].color.a = 0.5;
   }
 
-  cout<<"bbb"<<endl;
+  //15 is the number of landmarks
+
+  ellipse.markers.resize(15);
+  for (int i=0; i<15; i++){
+    int valid_i = i;
+    ellipse.markers[valid_i].header.frame_id = "map";
+    ellipse.markers[valid_i].header.stamp = ros::Time::now();
+    ellipse.markers[valid_i].ns = "points_and_lines";
+    ellipse.markers[valid_i].action = visualization_msgs::Marker::ADD;
+    ellipse.markers[valid_i].type = visualization_msgs::Marker::CYLINDER;
+
+    
+    ellipse.markers[valid_i].pose.orientation.z = 0;
+    ellipse.markers[valid_i].pose.orientation.w = 0;
+
+    ellipse.markers[valid_i].pose.position.z = 0;
+
+
+    ellipse.markers[valid_i].scale.z = 0;
+
+    ellipse.markers[valid_i].color.r = 0.0f;
+    ellipse.markers[valid_i].color.g = 1.0f;
+    ellipse.markers[valid_i].color.b = 0.0f;
+    ellipse.markers[valid_i].color.a = 1.0;
+      
+    ellipse.markers[valid_i].id = valid_i; //must add id, or there will be only one marker
+  
+  }
+}
+
+int main(int argc, char** argv)
+{
+  cout<<"***********start********* "<<endl;
+  readlandmarkGroundTruth();
+  ros::init(argc, argv, "points_and_lines");
+  cout<<"finish readlandmarkGroundTruth"<<endl;
+  ros::NodeHandle n;
+  //groundtruth landmark
+  marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
+  //slam landmark
+  marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 100000);
+  //ellipse
+  marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100000);
+  //multi_path groundtruth
+  marker_pub_path = n.advertise<visualization_msgs::MarkerArray>("groundtruth_path", 100000);
+  //slam path
+  marker_pub_slam_path = n.advertise<visualization_msgs::MarkerArray>("slam_path", 100000);
+    
+  cout<<"before init marker"<<endl; 
+  init_marker();
+  
+  cout << "******ros start*********" << endl;
+  ros::Subscriber subscriber = n.subscribe("/publishMsg4", 100000, publishMsg_callback);
+
+  
   for (int i = 0; i < landmark_groundtruth.size(); i++)
   {
     p.x = landmark_groundtruth[i].x;
     p.y = landmark_groundtruth[i].y;
     points3.points.push_back(p);
   }
-  cout<<"ccc"<<endl;
+  
   while (marker_pub3.getNumSubscribers() == 0) // TODO: Give time to Rviz to be fully started
   {
   
   }
   marker_pub3.publish(points3);
   
-
-  cout << M_PI << endl;
-  cout << std::atan(1) << endl;
   while (ros::ok())
   {
     cout<<k<<endl;
