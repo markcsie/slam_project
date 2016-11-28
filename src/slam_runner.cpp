@@ -135,13 +135,14 @@ SlamRunner::readGroundtruth(const int index, const string path_groundtruth)
 slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const std::vector<Particle> &particles)
 {
   const size_t num_particles = particles.size();
+  const size_t num_robots = particles[0].x_.size(); 
 
-  std::vector<Eigen::VectorXd> average_x(robots_.size(), Eigen::VectorXd::Zero(3));
+  std::vector<Eigen::VectorXd> average_x(num_robots, Eigen::VectorXd::Zero(3));
   std::unordered_map<int, Eigen::VectorXd> features_average_x;
   std::unordered_map<int, Eigen::MatrixXd> features_average_cov;
   for (const Particle &p : particles)
   {
-    for (size_t i = 0; i < robots_.size(); i++)
+    for (size_t i = 0; i < num_robots; i++)
     {
       average_x[i] += p.x_.find(robots_[i]->getId())->second;
     }
@@ -159,7 +160,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     }
   }
 
-  for (size_t i = 0; i < robots_.size(); i++)
+  for (size_t i = 0; i < num_robots; i++)
   {
     average_x[i] /= num_particles;
   }
@@ -190,19 +191,18 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
   }
   // TODO: multi robot
   int cur_id = frame_id;
-  int robot_num = particles[0].x_.size();
   slam_project::Robot_Path_Map msg2;
-  msg2.rnum = robot_num;
-  msg2.x.resize(robot_num);
-  msg2.y.resize(robot_num);
-  msg2.rx.resize(robot_num);
-  msg2.ry.resize(robot_num);
-  for (int i = 0; i < robot_num; i++)
+  msg2.rnum = num_robots;
+  msg2.x.resize(num_robots);
+  msg2.y.resize(num_robots);
+  msg2.rx.resize(num_robots);
+  msg2.ry.resize(num_robots);
+  for (int i = 0; i < num_robots; i++)
   {
     msg2.x[i] = average_x[i][0];
     msg2.y[i] = average_x[i][1];
   }
-  for (int i = 0; i < robot_num; i++)
+  for (int i = 0; i < num_robots; i++)
   {
     msg2.rx[i] = multirobot_groundtruth[i][cur_id].x;
     msg2.ry[i] = multirobot_groundtruth[i][cur_id].y;
@@ -261,8 +261,10 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
 {
   // TODO: multi-robot data
   //  cout << msg.forward_velocity[0] << endl;
+  assert(msg.robot_num <= robots_.size());
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
+//  std::cout << "ggg msg.robot_num " << msg.robot_num << std::endl;
   for (int i = 0; i < msg.robot_num; i++)
   {
     Eigen::VectorXd u(2);
