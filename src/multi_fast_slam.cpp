@@ -42,7 +42,7 @@ void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::ve
 {
   assert(u.size() == robots_.size() && u.size() == features.size());
   std::vector<double> weights;
-  for (size_t i = 0; i < robots_.size(); i++)
+  for (size_t i = 0; i < u.size(); i++)
   {
 //    std::cout << "ggg u[i] " << u[i].transpose() << std::endl;
     weights = updateRobot(robots_[i], u[i], features[i]);

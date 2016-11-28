@@ -181,7 +181,7 @@ void init_marker(){
   points4.color.r = 0.8f;
   points4.color.a = 0.5;
 
-  int robot_num = 2;
+  int robot_num = 5;
   multi_path.markers.resize(robot_num);
   multi_slam_path.markers.resize(robot_num);
   for (int i=0; i<robot_num; i++){
