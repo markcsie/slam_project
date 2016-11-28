@@ -72,7 +72,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
       multi_path.markers[i].points.clear();
       multi_path.markers[i].points.push_back(p);
-      multi_path.markers[i].id = robot_num*100000+k;
+      multi_path.markers[i].id = i*100000+k;
     }
     marker_pub_path.publish(multi_path);     
 
@@ -198,9 +198,9 @@ void init_marker(){
 
     multi_path.markers[i].scale.x = 0.05;
     multi_path.markers[i].scale.y = 0.05;
-    multi_path.markers[i].color.r = 0.8f;
+/*    multi_path.markers[i].color.r = 0.8f;
     multi_path.markers[i].color.a = 0.5;
-
+*/
     //calculated path from slam
     multi_slam_path.markers[i].header.frame_id = "map";
     multi_slam_path.markers[i].header.stamp = ros::Time::now();
@@ -211,8 +211,41 @@ void init_marker(){
 
     multi_slam_path.markers[i].scale.x = 0.05;
     multi_slam_path.markers[i].scale.y = 0.05;
-    multi_slam_path.markers[i].color.g = 0.8f;
-    multi_slam_path.markers[i].color.a = 0.5;
+/*    multi_slam_path.markers[i].color.g = 0.8f;
+    multi_slam_path.markers[i].color.a = 0.5;*/
+
+    if (i==0){
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+      multi_slam_path.markers[i].color.r = 0.3f;
+      multi_slam_path.markers[i].color.a = 1.0;
+    }else if (i==1){
+      multi_path.markers[i].color.g = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+      multi_slam_path.markers[i].color.g = 0.3f;
+      multi_slam_path.markers[i].color.a = 1.0;
+    }else if (i==2){
+      multi_path.markers[i].color.b = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+      multi_slam_path.markers[i].color.b = 0.3f;
+      multi_slam_path.markers[i].color.a = 1.0;
+    }else if (i==3){
+
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.g = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+      multi_slam_path.markers[i].color.r = 0.3f; 
+      multi_slam_path.markers[i].color.g = 0.3f;
+      multi_slam_path.markers[i].color.a = 1.0;
+    }else{
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.b = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+      multi_slam_path.markers[i].color.r = 0.3f; 
+      multi_slam_path.markers[i].color.b = 0.3f;
+      multi_slam_path.markers[i].color.a = 1.0;
+ 
+    }
   }
 
   //15 is the number of landmarks
