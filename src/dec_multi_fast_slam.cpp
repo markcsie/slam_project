@@ -4,13 +4,11 @@
 
 #include "utils/eigenmvn.h"
 
-DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map) :
-particles_(num_particles), initial_w_(initial_w), map_(&map)
+DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map) :
+particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
 {
-  for (const RobotModelInterface & r : robots)
-  {
-    robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
-  }
+  virtual_robots_u_.resize(robots_.size());
+  virtual_robots_z_.resize(robots_.size());
 
   for (size_t i = 0; i < num_particles; i++)
   {
@@ -72,7 +70,7 @@ void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std:
       forward_weights = updateRobot(robots_[i], u[i], features[i]);
     }
   }
-
+  
   // backward robots
   std::vector<double> backward_weights(particles_.size(), 1.0);
   for (size_t i = 0; i < virtual_robots_.size(); i++)
@@ -118,6 +116,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
     {
       const Eigen::VectorXd feature = features.row(i);
       const int id = feature[0];
+//      std::cout << "ggg id " << id << std::endl;
 
       int robot_index = getRobotIndex(id);
       if (robot_index >= 0) // The feature is a robot

@@ -13,7 +13,7 @@
 class FastSlam2
 {
 public:
-  FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map);
+  FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::shared_ptr<const RobotModelInterface> &robot, const MapModelInterface &map);
   FastSlam2(const FastSlam2& other);
   virtual ~FastSlam2();
 

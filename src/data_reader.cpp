@@ -352,13 +352,14 @@ int main(int argc, char **argv)
   
   while (ros::ok())
   {
-    cout<<j<<endl;
+//    cout<<j<<endl;
     if (j < 7000)
     {
 //      dataPublisher2.publish(sendMsg_Odometry(j));
       dataPublisher2.publish(sendMultiMsg_Odometry(j, n));
+      j++;
     }
-    j++;
+
     ros::spinOnce(); // check for incoming messages
     rate.sleep();
   }

@@ -15,7 +15,7 @@
 class DecMultiFastSlam
 {
 public:
-  DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map);
+  DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map);
   DecMultiFastSlam(const DecMultiFastSlam& other);
   virtual ~DecMultiFastSlam();
 

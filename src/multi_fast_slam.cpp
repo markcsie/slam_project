@@ -4,13 +4,9 @@
 
 #include "utils/eigenmvn.h"
 
-MultiFastSlam::MultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<RobotModelInterface> &robots, const MapModelInterface &map) :
-particles_(num_particles), initial_w_(initial_w), map_(&map)
+MultiFastSlam::MultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map) :
+particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
 {
-  for (const RobotModelInterface & r : robots)
-  {
-    robots_.push_back(std::shared_ptr<const RobotModelInterface>(&r));
-  }
   assert(initial_x.size() == robots_.size());
   for (size_t i = 0; i < num_particles; i++)
   {

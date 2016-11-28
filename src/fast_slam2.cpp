@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-FastSlam2::FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const RobotModelInterface &robot, const MapModelInterface &map) :
-particles_(num_particles), initial_w_(initial_w), robot_(&robot), robot_id_(robot_->getId()), map_(&map)
+FastSlam2::FastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::shared_ptr<const RobotModelInterface> &robot, const MapModelInterface &map) :
+particles_(num_particles), initial_w_(initial_w), robot_(robot), robot_id_(robot_->getId()), map_(&map)
 {
   assert(initial_x.size() >= 1);
   for (size_t i = 0; i < num_particles; i++)

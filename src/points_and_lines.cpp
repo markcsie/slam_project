@@ -283,7 +283,7 @@ int main(int argc, char** argv)
   
   while (ros::ok())
   {
-    cout<<k<<endl;
+//    cout<<k<<endl;
     ros::spinOnce();
   }
 }
