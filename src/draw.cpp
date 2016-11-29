@@ -88,7 +88,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
   
     k++;
-    int robot_num = subMsg.rnum;
+    int robot_num = subMsg.rx.size();
 
     //groundtruth
     for (int i=0; i<robot_num; i++){

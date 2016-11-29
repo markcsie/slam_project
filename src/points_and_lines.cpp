@@ -58,11 +58,193 @@ void readlandmarkGroundTruth()
   file5_2.close();
 }
 
+//init mark of landmark 
+void init_marker1(){
+  float f = 0.0;
+  points4.header.frame_id = points3.header.frame_id = "map";
+  points4.header.stamp = points3.header.stamp = ros::Time::now();
+  points4.ns = points3.ns  = "points_and_lines";
+  points4.action = points3.action = visualization_msgs::Marker::ADD;
+  points4.pose.orientation.w = points3.pose.orientation.w = 1.0;
+
+  points4.type = points3.type = visualization_msgs::Marker::POINTS;
+  
+
+  points3.scale.x = 0.1;
+  points3.scale.y = 0.1;
+
+  points3.color.b = 1.0f;
+  points3.color.a = 1.0;
+
+  points4.scale.x = 0.1;
+  points4.scale.y = 0.1;
+
+  points4.color.r = 0.8f;
+  points4.color.a = 0.5;
+  
+
+  ellipse.markers.resize(15);
+  for (int i=0; i<15; i++){
+    int valid_i = i;
+    ellipse.markers[valid_i].header.frame_id = "map";
+    ellipse.markers[valid_i].header.stamp = ros::Time::now();
+    ellipse.markers[valid_i].ns = "points_and_lines";
+    ellipse.markers[valid_i].action = visualization_msgs::Marker::ADD;
+    ellipse.markers[valid_i].type = visualization_msgs::Marker::CYLINDER;
+
+    
+    ellipse.markers[valid_i].pose.orientation.z = 0;
+    ellipse.markers[valid_i].pose.orientation.w = 0;
+
+    ellipse.markers[valid_i].pose.position.z = 0;
+
+
+    ellipse.markers[valid_i].scale.z = 0;
+
+    ellipse.markers[valid_i].color.r = 0.0f;
+    ellipse.markers[valid_i].color.g = 1.0f;
+    ellipse.markers[valid_i].color.b = 0.0f;
+    ellipse.markers[valid_i].color.a = 1.0;
+      
+    ellipse.markers[valid_i].id = valid_i; //must add id, or there will be only one marker
+  
+  }
+}
+
+/*
+1 5
+2 14
+3 41
+4 32
+5 23
+init marker of slam_path, groundtruth path
+*/
+
+void init_marker2(int robot_num, int path_num, vector<int> path_id){
+  //multi_path: groundtruth, multi_slam_path: slam path
+  multi_path.markers.resize(robot_num);
+  multi_slam_path.markers.resize(9);
+  
+  for (int i=0; i<9; i++){
+    multi_slam_path.markers[i].header.frame_id = "map";
+    multi_slam_path.markers[i].header.stamp = ros::Time::now();
+    multi_slam_path.markers[i].ns = "points_and_lines";
+    multi_slam_path.markers[i].action = visualization_msgs::Marker::ADD;
+    multi_slam_path.markers[i].type = visualization_msgs::Marker::POINTS;
+    multi_slam_path.markers[i].lifetime = ros::Duration();
+
+    multi_slam_path.markers[i].scale.x = 0.05;
+    multi_slam_path.markers[i].scale.y = 0.05;
+  }
+
+  for (int i=0; i<path_num; i++){
+
+
+    int j=path_id[i];
+    cout<<"j: "<<j<<endl;
+    if (j==5){
+      multi_slam_path.markers[0].color.r = 0.3f;  
+      multi_slam_path.markers[0].color.a = 1.0;
+    }else if (j==14 || j==-14){
+      if (j>0){
+        multi_slam_path.markers[1].color.g = 0.3f;
+        multi_slam_path.markers[1].color.a = 1.0;
+      }else{
+        multi_slam_path.markers[2].color.g = 0.3f;
+        multi_slam_path.markers[2].color.a = 1.0;
+      }
+    }else if (j==41 || j==-41){
+      if (j>0){
+        multi_slam_path.markers[3].color.b = 0.3f;
+        multi_slam_path.markers[3].color.a = 1.0;
+      }else{
+        multi_slam_path.markers[4].color.b = 0.3f;
+        multi_slam_path.markers[4].color.a = 1.0;
+      }
+    }else if (j==32 || j==-32){
+      if (j>0){
+        multi_slam_path.markers[5].color.r = 0.3f; 
+        multi_slam_path.markers[5].color.g = 0.3f;
+        multi_slam_path.markers[5].color.a = 1.0;
+      }else{
+        multi_slam_path.markers[6].color.r = 0.3f; 
+        multi_slam_path.markers[6].color.g = 0.3f;
+        multi_slam_path.markers[6].color.a = 1.0;
+      }
+     }else{
+      if (j>0){    
+        multi_slam_path.markers[7].color.r = 0.3f; 
+        multi_slam_path.markers[7].color.b = 0.3f;
+        multi_slam_path.markers[7].color.a = 1.0;
+      }else{
+        multi_slam_path.markers[8].color.r = 0.3f; 
+        multi_slam_path.markers[8].color.b = 0.3f;
+        multi_slam_path.markers[8].color.a = 1.0;
+      }
+    }    
+
+  }
+
+  for (int i=0; i<robot_num; i++){
+    //groundtruth
+    multi_path.markers[i].header.frame_id = "map";
+    multi_path.markers[i].header.stamp = ros::Time::now();
+    multi_path.markers[i].ns = "points_and_lines";
+    multi_path.markers[i].action = visualization_msgs::Marker::ADD;
+    multi_path.markers[i].type = visualization_msgs::Marker::POINTS;
+    multi_path.markers[i].lifetime = ros::Duration();
+     // A value of ros::Duration() means never to auto-delete
+
+    multi_path.markers[i].scale.x = 0.05;
+    multi_path.markers[i].scale.y = 0.05;
+/*    multi_path.markers[i].color.r = 0.8f;
+    multi_path.markers[i].color.a = 0.5;
+*/
+    //calculated path from slam
+
+/*    multi_slam_path.markers[i].color.g = 0.8f;
+    multi_slam_path.markers[i].color.a = 0.5;*/
+
+    if (i==0){
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+    }else if (i==1){
+      multi_path.markers[i].color.g = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+    }else if (i==2){
+      multi_path.markers[i].color.b = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+    }else if (i==3){
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.g = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+    }else{
+      multi_path.markers[i].color.r = 0.9f;
+      multi_path.markers[i].color.b = 0.9f;
+      multi_path.markers[i].color.a = 1.0;
+    }
+  }
+
+  //15 is the number of landmarks
+
+  
+}
+
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
-  
+    cout<<"call back start"<<endl;
     k++;
-    int robot_num = subMsg.rnum;
+    int robot_num = subMsg.rx.size();
+    int path_num = subMsg.robot_id.size();
+    
+    cout<<"robot_num: "<<robot_num<<endl;
+    cout<<"path_num: "<<path_num<<endl;
+    vector<int> rid;
+    for (int i=0; i<subMsg.robot_id.size(); i++)
+      rid.push_back(subMsg.robot_id[i]);
+
+    init_marker2(robot_num, path_num, rid);
+    
 
     //groundtruth
     for (int i=0; i<robot_num; i++){
@@ -72,7 +254,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
       multi_path.markers[i].points.clear();
       multi_path.markers[i].points.push_back(p);
-      multi_path.markers[i].id = i*100000+k;
+      multi_path.markers[i].id =(i+9)*100000+k;
     }
     marker_pub_path.publish(multi_path);     
 
@@ -83,16 +265,58 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       return;
     }
 
-
+/*
+1 5
+2 14
+3 41
+4 32
+5 23*/
     //slam path
-    for (int i=0; i<robot_num; i++){
+    for (int i=0; i<path_num; i++){
       p.x = subMsg.x[i];
       p.y = subMsg.y[i];
-      multi_slam_path.markers[i].points.clear();
-      multi_slam_path.markers[i].points.push_back(p);
-      multi_slam_path.markers[i].id = (i+robot_num)*100000+k;
+      int j=rid[i];
+      if (j==5){
+        multi_slam_path.markers[0].points.clear();
+        multi_slam_path.markers[0].points.push_back(p);
+        multi_slam_path.markers[0].id = 0*100000+k;
+      }else if (j==14){
+        multi_slam_path.markers[1].points.clear();
+        multi_slam_path.markers[1].points.push_back(p);
+        multi_slam_path.markers[1].id = 1*100000+k;
+      }else if (j==-14){
+        multi_slam_path.markers[2].points.clear();
+        multi_slam_path.markers[2].points.push_back(p);
+        multi_slam_path.markers[2].id = 2*100000+k;
+      }else if (j==41){
+        multi_slam_path.markers[3].points.clear();
+        multi_slam_path.markers[3].points.push_back(p);
+        multi_slam_path.markers[3].id = 3*100000+k;
+        cout<<"41 p.x y: "<<p.x<<" "<<p.y<<endl;
+      }else if (j==-41){
+        multi_slam_path.markers[4].points.clear();
+        multi_slam_path.markers[4].points.push_back(p);
+        multi_slam_path.markers[4].id = 4*100000+k;
+        cout<<"-41 p.x y: "<<p.x<<" "<<p.y<<endl;
+      }else if (j==32){
+        multi_slam_path.markers[5].points.clear();
+        multi_slam_path.markers[5].points.push_back(p);
+        multi_slam_path.markers[5].id = 5*100000+k;
+      }else if (j==-32){
+        multi_slam_path.markers[6].points.clear();
+        multi_slam_path.markers[6].points.push_back(p);
+        multi_slam_path.markers[6].id = 6*100000+k;
+      }else if (j==23){
+        multi_slam_path.markers[7].points.clear();
+        multi_slam_path.markers[7].points.push_back(p);
+        multi_slam_path.markers[7].id = 7*100000+k;
+      }else{
+        multi_slam_path.markers[8].points.clear();
+        multi_slam_path.markers[8].points.push_back(p);
+        multi_slam_path.markers[8].id = 8*100000+k;
+      }
     }
-    marker_pub_path.publish(multi_slam_path);     
+    marker_pub_slam_path.publish(multi_slam_path);     
 
     //slam landmark and ellipse
     int len = subMsg.num;
@@ -153,130 +377,13 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
     }
 
-
+    cout<<"call back end"<<endl;
     marker_pub4.publish(points4);
     marker_pub5.publish(ellipse);
   
 }
 
 
-void init_marker(){
-  float f = 0.0;
-  points4.header.frame_id = points3.header.frame_id = "map";
-  points4.header.stamp = points3.header.stamp = ros::Time::now();
-  points4.ns = points3.ns  = "points_and_lines";
-  points4.action = points3.action = visualization_msgs::Marker::ADD;
-  points4.pose.orientation.w = points3.pose.orientation.w = 1.0;
-
-  points4.type = points3.type = visualization_msgs::Marker::POINTS;
-  
-
-  points3.scale.x = 0.1;
-  points3.scale.y = 0.1;
-
-  points3.color.b = 1.0f;
-  points3.color.a = 1.0;
-
-  points4.scale.x = 0.1;
-  points4.scale.y = 0.1;
-
-  points4.color.r = 0.8f;
-  points4.color.a = 0.5;
-
-  int robot_num = 3;
-  multi_path.markers.resize(robot_num);
-  multi_slam_path.markers.resize(robot_num);
-  for (int i=0; i<robot_num; i++){
-    //groundtruth
-    multi_path.markers[i].header.frame_id = "map";
-    multi_path.markers[i].header.stamp = ros::Time::now();
-    multi_path.markers[i].ns = "points_and_lines";
-    multi_path.markers[i].action = visualization_msgs::Marker::ADD;
-    multi_path.markers[i].type = visualization_msgs::Marker::POINTS;
-    multi_path.markers[i].lifetime = ros::Duration();
-     // A value of ros::Duration() means never to auto-delete
-
-    multi_path.markers[i].scale.x = 0.05;
-    multi_path.markers[i].scale.y = 0.05;
-/*    multi_path.markers[i].color.r = 0.8f;
-    multi_path.markers[i].color.a = 0.5;
-*/
-    //calculated path from slam
-    multi_slam_path.markers[i].header.frame_id = "map";
-    multi_slam_path.markers[i].header.stamp = ros::Time::now();
-    multi_slam_path.markers[i].ns = "points_and_lines";
-    multi_slam_path.markers[i].action = visualization_msgs::Marker::ADD;
-    multi_slam_path.markers[i].type = visualization_msgs::Marker::POINTS;
-    multi_slam_path.markers[i].lifetime = ros::Duration();
-
-    multi_slam_path.markers[i].scale.x = 0.05;
-    multi_slam_path.markers[i].scale.y = 0.05;
-/*    multi_slam_path.markers[i].color.g = 0.8f;
-    multi_slam_path.markers[i].color.a = 0.5;*/
-
-    if (i==0){
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-      multi_slam_path.markers[i].color.r = 0.3f;
-      multi_slam_path.markers[i].color.a = 1.0;
-    }else if (i==1){
-      multi_path.markers[i].color.g = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-      multi_slam_path.markers[i].color.g = 0.3f;
-      multi_slam_path.markers[i].color.a = 1.0;
-    }else if (i==2){
-      multi_path.markers[i].color.b = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-      multi_slam_path.markers[i].color.b = 0.3f;
-      multi_slam_path.markers[i].color.a = 1.0;
-    }else if (i==3){
-
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.g = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-      multi_slam_path.markers[i].color.r = 0.3f; 
-      multi_slam_path.markers[i].color.g = 0.3f;
-      multi_slam_path.markers[i].color.a = 1.0;
-    }else{
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.b = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-      multi_slam_path.markers[i].color.r = 0.3f; 
-      multi_slam_path.markers[i].color.b = 0.3f;
-      multi_slam_path.markers[i].color.a = 1.0;
- 
-    }
-  }
-
-  //15 is the number of landmarks
-
-  ellipse.markers.resize(15);
-  for (int i=0; i<15; i++){
-    int valid_i = i;
-    ellipse.markers[valid_i].header.frame_id = "map";
-    ellipse.markers[valid_i].header.stamp = ros::Time::now();
-    ellipse.markers[valid_i].ns = "points_and_lines";
-    ellipse.markers[valid_i].action = visualization_msgs::Marker::ADD;
-    ellipse.markers[valid_i].type = visualization_msgs::Marker::CYLINDER;
-
-    
-    ellipse.markers[valid_i].pose.orientation.z = 0;
-    ellipse.markers[valid_i].pose.orientation.w = 0;
-
-    ellipse.markers[valid_i].pose.position.z = 0;
-
-
-    ellipse.markers[valid_i].scale.z = 0;
-
-    ellipse.markers[valid_i].color.r = 0.0f;
-    ellipse.markers[valid_i].color.g = 1.0f;
-    ellipse.markers[valid_i].color.b = 0.0f;
-    ellipse.markers[valid_i].color.a = 1.0;
-      
-    ellipse.markers[valid_i].id = valid_i; //must add id, or there will be only one marker
-  
-  }
-}
 
 int main(int argc, char** argv)
 {
@@ -297,7 +404,7 @@ int main(int argc, char** argv)
   marker_pub_slam_path = n.advertise<visualization_msgs::MarkerArray>("slam_path", 100000);
     
   cout<<"before init marker"<<endl; 
-  init_marker();
+  init_marker1();
   
   cout << "******ros start*********" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 100000, publishMsg_callback);
