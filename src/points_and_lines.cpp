@@ -141,7 +141,7 @@ void init_marker2(int robot_num, int path_num, vector<int> path_id){
 
 
     int j=path_id[i];
-    cout<<"j: "<<j<<endl;
+//    cout<<"j: "<<j<<endl;
     if (j==5){
       multi_slam_path.markers[0].color.r = 0.3f;  
       multi_slam_path.markers[0].color.a = 1.0;
@@ -232,13 +232,13 @@ void init_marker2(int robot_num, int path_num, vector<int> path_id){
 
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
-    cout<<"call back start"<<endl;
+//    cout<<"call back start"<<endl;
     k++;
     int robot_num = subMsg.rx.size();
     int path_num = subMsg.robot_id.size();
     
-    cout<<"robot_num: "<<robot_num<<endl;
-    cout<<"path_num: "<<path_num<<endl;
+//    cout<<"robot_num: "<<robot_num<<endl;
+//    cout<<"path_num: "<<path_num<<endl;
     vector<int> rid;
     for (int i=0; i<subMsg.robot_id.size(); i++)
       rid.push_back(subMsg.robot_id[i]);
@@ -252,9 +252,9 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       p.x = subMsg.rx[i];
       p.y = subMsg.ry[i];
 
-      multi_path.markers[i].points.clear();
+    //  multi_path.markers[i].points.clear();
       multi_path.markers[i].points.push_back(p);
-      multi_path.markers[i].id =(i+9)*100000+k;
+      multi_path.markers[i].id =i;//(i+9)*100000+k;
     }
     marker_pub_path.publish(multi_path);     
 
@@ -271,56 +271,58 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 3 41
 4 32
 5 23*/
+
+
     //slam path
     for (int i=0; i<path_num; i++){
       p.x = subMsg.x[i];
       p.y = subMsg.y[i];
       int j=rid[i];
+    //  multi_slam_path.markers[i].id = i;
+
       if (j==5){
-        multi_slam_path.markers[0].points.clear();
+    //    multi_slam_path.markers[0].points.clear();
         multi_slam_path.markers[0].points.push_back(p);
-        multi_slam_path.markers[0].id = 0*100000+k;
+        multi_slam_path.markers[0].id = 10;//*100000+k;
       }else if (j==14){
-        multi_slam_path.markers[1].points.clear();
+    //    multi_slam_path.markers[1].points.clear();
         multi_slam_path.markers[1].points.push_back(p);
-        multi_slam_path.markers[1].id = 1*100000+k;
+        multi_slam_path.markers[1].id = 11;//*100000+k;
       }else if (j==-14){
-        multi_slam_path.markers[2].points.clear();
+    //    multi_slam_path.markers[2].points.clear();
         multi_slam_path.markers[2].points.push_back(p);
-        multi_slam_path.markers[2].id = 2*100000+k;
+        multi_slam_path.markers[2].id = 12;//*100000+k;
       }else if (j==41){
-        multi_slam_path.markers[3].points.clear();
+    //    multi_slam_path.markers[3].points.clear();
         multi_slam_path.markers[3].points.push_back(p);
-        multi_slam_path.markers[3].id = 3*100000+k;
-        cout<<"41 p.x y: "<<p.x<<" "<<p.y<<endl;
+        multi_slam_path.markers[3].id = 13;//*100000+k;
       }else if (j==-41){
-        multi_slam_path.markers[4].points.clear();
+    //    multi_slam_path.markers[4].points.clear();
         multi_slam_path.markers[4].points.push_back(p);
-        multi_slam_path.markers[4].id = 4*100000+k;
-        cout<<"-41 p.x y: "<<p.x<<" "<<p.y<<endl;
+        multi_slam_path.markers[4].id = 14;//*100000+k;
       }else if (j==32){
-        multi_slam_path.markers[5].points.clear();
+    //    multi_slam_path.markers[5].points.clear();
         multi_slam_path.markers[5].points.push_back(p);
-        multi_slam_path.markers[5].id = 5*100000+k;
+        multi_slam_path.markers[5].id = 15;//*100000+k;
       }else if (j==-32){
-        multi_slam_path.markers[6].points.clear();
+    //    multi_slam_path.markers[6].points.clear();
         multi_slam_path.markers[6].points.push_back(p);
-        multi_slam_path.markers[6].id = 6*100000+k;
+        multi_slam_path.markers[6].id = 16;//*100000+k;
       }else if (j==23){
-        multi_slam_path.markers[7].points.clear();
+    //    multi_slam_path.markers[7].points.clear();
         multi_slam_path.markers[7].points.push_back(p);
-        multi_slam_path.markers[7].id = 7*100000+k;
+        multi_slam_path.markers[7].id = 17;//*100000+k;
       }else{
-        multi_slam_path.markers[8].points.clear();
+    //    multi_slam_path.markers[8].points.clear();
         multi_slam_path.markers[8].points.push_back(p);
-        multi_slam_path.markers[8].id = 8*100000+k;
+        multi_slam_path.markers[8].id = 18;//*100000+k;
       }
     }
     marker_pub_slam_path.publish(multi_slam_path);     
 
     //slam landmark and ellipse
     int len = subMsg.num;
-    cout << "*******" << subMsg.num << endl;
+//c    cout << "*******" << subMsg.num << endl;
     int valid_len = 0, valid_i=0;
     for (int i=0; i<len; i++)
       if (!std::isnan(subMsg.landmark_x[i] && !std::isnan(subMsg.landmark_y[i]) ))
@@ -340,7 +342,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       points4.points.push_back(p);
       points4.id = k*20+i;
 //      marker_pub4.publish(points4);
-      cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_y[i] << endl;
+//      cout << "ggg ************** subMsg.landmark [i] " << subMsg.landmark_x[i] << " " << subMsg.landmark_y[i] << endl;
 
       Eigen::MatrixXd cov(2, 2);
       cov(0, 0) = subMsg.landmark_cov[i].data[0];
@@ -377,7 +379,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
     }
 
-    cout<<"call back end"<<endl;
+//    cout<<"call back end"<<endl;
     marker_pub4.publish(points4);
     marker_pub5.publish(ellipse);
   
