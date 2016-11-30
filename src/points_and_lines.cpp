@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <nav_msgs/Path.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <ros/package.h>
@@ -17,6 +18,14 @@ multi_slam_path: result path from slam
 
 vector<landmark> landmark_groundtruth;
 int k = 0;
+
+
+ros::Publisher pub_groundtruth_path1;
+ros::Publisher pub_groundtruth_path2;
+ros::Publisher pub_groundtruth_path3;
+ros::Publisher pub_groundtruth_path4;
+ros::Publisher pub_groundtruth_path5;
+
 geometry_msgs::Point p;
 ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
@@ -27,6 +36,34 @@ visualization_msgs::Marker points3, points4;
 visualization_msgs::MarkerArray ellipse;
 visualization_msgs::MarkerArray multi_path;  //groundtruth
 visualization_msgs::MarkerArray multi_slam_path; //result from slam
+
+std::vector<std::vector<groundtruth> > multirobot_groundtruth;
+
+vector<vector<groundtruth> > multi_groundtruth;
+
+void readGroundtruth(const int index, const string path_groundtruth)
+{
+  ifstream file3(path_groundtruth);
+  ifstream file3_2(path_groundtruth);
+  int line_count3 = 0;
+  string line3;
+  double g_time, g_x, g_y, g_orientation;
+  groundtruth g_cur;
+  while (getline(file3, line3))
+    ++line_count3;
+  for (int i = 0; i < line_count3; i++)
+  {
+    file3_2 >> g_time >> g_x >> g_y>>g_orientation;
+    g_cur.id = i;
+    g_cur.time = g_time;
+    g_cur.x = g_x;
+    g_cur.y = g_y;
+    g_cur.orientation = g_orientation;
+    multirobot_groundtruth[index].push_back(g_cur);
+  }
+  file3.close();
+  file3_2.close();
+}
 
 void readlandmarkGroundTruth()
 {
@@ -185,61 +222,79 @@ void init_marker2(int robot_num, int path_num, vector<int> path_id){
 
   }
 
-  for (int i=0; i<robot_num; i++){
-    //groundtruth
-    multi_path.markers[i].header.frame_id = "map";
-    multi_path.markers[i].header.stamp = ros::Time::now();
-    multi_path.markers[i].ns = "points_and_lines";
-    multi_path.markers[i].action = visualization_msgs::Marker::ADD;
-    multi_path.markers[i].type = visualization_msgs::Marker::POINTS;
-    multi_path.markers[i].lifetime = ros::Duration();
-     // A value of ros::Duration() means never to auto-delete
-
-    multi_path.markers[i].scale.x = 0.05;
-    multi_path.markers[i].scale.y = 0.05;
-/*    multi_path.markers[i].color.r = 0.8f;
-    multi_path.markers[i].color.a = 0.5;
-*/
-    //calculated path from slam
-
-/*    multi_slam_path.markers[i].color.g = 0.8f;
-    multi_slam_path.markers[i].color.a = 0.5;*/
-
-    if (i==0){
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-    }else if (i==1){
-      multi_path.markers[i].color.g = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-    }else if (i==2){
-      multi_path.markers[i].color.b = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-    }else if (i==3){
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.g = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-    }else{
-      multi_path.markers[i].color.r = 0.9f;
-      multi_path.markers[i].color.b = 0.9f;
-      multi_path.markers[i].color.a = 1.0;
-    }
-  }
 
   //15 is the number of landmarks
 
   
 }
 
+
+void update_groundtruth(int robot_num){
+  nav_msgs::Path groundtruth_path1;
+  nav_msgs::Path groundtruth_path2;
+  nav_msgs::Path groundtruth_path3;
+  nav_msgs::Path groundtruth_path4;
+  nav_msgs::Path groundtruth_path5;
+
+  groundtruth_path1.header.frame_id = "map";
+  groundtruth_path1.header.stamp = ros::Time::now();
+  groundtruth_path2.header.frame_id = "map";
+  groundtruth_path2.header.stamp = ros::Time::now();
+  groundtruth_path3.header.frame_id = "map";
+  groundtruth_path3.header.stamp = ros::Time::now();
+  groundtruth_path4.header.frame_id = "map";
+  groundtruth_path4.header.stamp = ros::Time::now();
+  groundtruth_path5.header.frame_id = "map";
+  groundtruth_path5.header.stamp = ros::Time::now();
+      
+
+  for (int i=0; i<robot_num; i++){
+    std::vector<geometry_msgs::PoseStamped> poses(k);
+    cout<<"k: "<<k<<endl;
+    for (int j=0; j<k; j++){
+      cout<<j<<endl;
+      cout<<multi_groundtruth[i].size()<<endl;
+      poses.at(j).pose.position.x = multi_groundtruth[i][j].x;
+      poses.at(j).pose.position.y = multi_groundtruth[i][j].y;
+    }
+
+
+    if (i==0)
+      groundtruth_path1.poses = poses;
+    else if (i==1)
+      groundtruth_path2.poses = poses;
+    else if (i==2)
+      groundtruth_path3.poses = poses;
+    else if (i==3)
+      groundtruth_path4.poses = poses;
+    else 
+      groundtruth_path5.poses = poses;
+
+  }
+  pub_groundtruth_path1.publish(groundtruth_path1);
+  pub_groundtruth_path2.publish(groundtruth_path2);
+  pub_groundtruth_path3.publish(groundtruth_path3);
+  pub_groundtruth_path4.publish(groundtruth_path4);
+  pub_groundtruth_path5.publish(groundtruth_path5);
+  cout<<"end publish"<<endl;
+}
+
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
 //    cout<<"call back start"<<endl;
     k++;
+
     int robot_num = subMsg.rx.size();
     int path_num = subMsg.robot_id.size();
-    
-//    cout<<"robot_num: "<<robot_num<<endl;
-//    cout<<"path_num: "<<path_num<<endl;
-    vector<int> rid;
+    for (int i=0; i<robot_num; i++){
+      groundtruth cur_g;
+      cur_g.x = subMsg.rx[i];
+      cur_g.y = subMsg.ry[i];
+      multi_groundtruth[i].push_back(cur_g);
+    }
+
+    update_groundtruth(3);
+    /*vector<int> rid;
     for (int i=0; i<subMsg.robot_id.size(); i++)
       rid.push_back(subMsg.robot_id[i]);
 
@@ -265,12 +320,12 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       return;
     }
 
-/*
-1 5
-2 14
-3 41
-4 32
-5 23*/
+
+//1 5
+//2 14
+//3 41
+//4 32
+//5 23
 
 
     //slam path
@@ -382,7 +437,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 //    cout<<"call back end"<<endl;
     marker_pub4.publish(points4);
     marker_pub5.publish(ellipse);
-  
+  */
 }
 
 
@@ -394,6 +449,16 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "points_and_lines");
   cout<<"finish readlandmarkGroundTruth"<<endl;
   ros::NodeHandle n;
+ 
+
+  pub_groundtruth_path1 = n.advertise<nav_msgs::Path>("groundtruth_path1", 10000);
+  pub_groundtruth_path2 = n.advertise<nav_msgs::Path>("groundtruth_path2", 10000);
+  pub_groundtruth_path3 = n.advertise<nav_msgs::Path>("groundtruth_path3", 10000);
+  pub_groundtruth_path4 = n.advertise<nav_msgs::Path>("groundtruth_path4", 10000);
+  pub_groundtruth_path5 = n.advertise<nav_msgs::Path>("groundtruth_path5", 10000);
+
+
+
   //groundtruth landmark
   marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
   //slam landmark
@@ -408,7 +473,6 @@ int main(int argc, char** argv)
   cout<<"before init marker"<<endl; 
   init_marker1();
   
-  cout << "******ros start*********" << endl;
   ros::Subscriber subscriber = n.subscribe("/publishMsg4", 100000, publishMsg_callback);
 
   
@@ -425,6 +489,11 @@ int main(int argc, char** argv)
   }
   marker_pub3.publish(points3);
   
+  string path = ros::package::getPath("slam_project");
+  int robot_num = 3;  
+  multi_groundtruth.resize(robot_num);
+  cout << "******ros start*********" << endl;
+ 
   while (ros::ok())
   {
 //    cout<<k<<endl;
