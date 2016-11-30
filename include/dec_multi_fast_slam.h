@@ -26,9 +26,9 @@ public:
 private:
   std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
   
-  std::vector<std::shared_ptr<const RobotModelInterface>> virtual_robots_;
-  std::vector<std::stack<Eigen::VectorXd>> virtual_robots_u_;
-  std::vector<std::stack<Eigen::MatrixXd>> virtual_robots_z_;
+  std::vector<int> virtual_robots_id_; // TODO: std::vector<std::shared_ptr<const RobotModelInterface>> push_back????
+  std::unordered_map<int, std::stack<Eigen::VectorXd>> virtual_robots_u_;
+  std::unordered_map<int, std::stack<Eigen::MatrixXd>> virtual_robots_z_;
   
   std::shared_ptr<const MapModelInterface> map_;
 
@@ -37,9 +37,9 @@ private:
 
   int getRobotIndex(const int &id);
   
-  std::vector<double> updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features);
+  std::vector<double> updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features, const bool &backward);
 
-  double updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature);
+  double updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature, const bool &backward);
   
 };
 

@@ -165,6 +165,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     msg2.robot_id[i] = it->first;
     msg2.x[i] = average_x[i][0];
     msg2.y[i] = average_x[i][1];
+//    std::cout << "msg2.robot_id[i] " << msg2.robot_id[i] << " " << average_x[i].transpose() << std::endl;
   }
   
   msg2.rx.resize(msg_robot_num_);

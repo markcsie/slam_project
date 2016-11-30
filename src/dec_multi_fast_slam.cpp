@@ -7,8 +7,12 @@
 DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map) :
 particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
 {
-  virtual_robots_u_.resize(robots_.size());
-  virtual_robots_z_.resize(robots_.size());
+  // Initialize the data stack for virtual robots
+  for (size_t i = 0; i < robots_.size(); i++)
+  {
+    virtual_robots_u_[-robots_[i]->getId()] = std::stack<Eigen::VectorXd>();
+    virtual_robots_z_[-robots_[i]->getId()] = std::stack<Eigen::MatrixXd>();
+  }
 
   for (size_t i = 0; i < num_particles; i++)
   {
@@ -42,10 +46,12 @@ Particle DecMultiFastSlam::getParticle(const size_t &i)
   return particles_[i];
 }
 
-int DecMultiFastSlam::getRobotIndex(const int &id) 
+int DecMultiFastSlam::getRobotIndex(const int &id)
 {
-  for (size_t i = 0; i < robots_.size(); i++) {
-    if (id == robots_[i]->getId()) { // this observation is a robot
+  for (size_t i = 0; i < robots_.size(); i++)
+  {
+    if (id == robots_[i]->getId())
+    { // this observation is a robot
       return i;
     }
   }
@@ -54,34 +60,47 @@ int DecMultiFastSlam::getRobotIndex(const int &id)
 
 void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
-//  assert(u.size() == robots_.size() && u.size() == features.size());
-  
+  //  assert(u.size() == robots_.size() && u.size() == features.size());
+
   std::vector<double> forward_weights(particles_.size(), 1.0);
-  for (size_t i = 0; i < u.size(); i++) {
+  for (size_t i = 0; i < u.size(); i++)
+  {
     // This robot has not been incorporated into the map => Store the data.  
-    if (particles_[0].x_.find(robots_[i]->getId()) == particles_[0].x_.end()) 
+    if (particles_[0].x_.find(robots_[i]->getId()) == particles_[0].x_.end())
     {
-      virtual_robots_u_[i].push(u[i]);
-      virtual_robots_z_[i].push(features[i]);
-    } 
+      const int virtual_robot_id = -robots_[i]->getId();
+      virtual_robots_u_[virtual_robot_id].push(u[i]);
+      virtual_robots_z_[virtual_robot_id].push(features[i]);
+    }
     else
     {
       // forward robots
-      forward_weights = updateRobot(robots_[i], u[i], features[i]);
+      forward_weights = updateRobot(robots_[i], u[i], features[i], false);
     }
   }
-  
+
   // backward robots
   std::vector<double> backward_weights(particles_.size(), 1.0);
-  for (size_t i = 0; i < virtual_robots_.size(); i++)
+  for (const int virtual_robot_id : virtual_robots_id_) // new virtual robots might be added during backward updating
   {
     // TODO: if the stack is empty
     // TODO: -u? check if z is aligned???
-    if (virtual_robots_u_[i].size() > 0 && virtual_robots_z_[i].size() > 0)
+    // TODO: Workaround
+    int virtual_robot_index;
+    for (size_t i = 0; i < robots_.size(); i++)
     {
-      backward_weights = updateRobot(virtual_robots_[i], -virtual_robots_u_[i].top(), virtual_robots_z_[i].top());
-      virtual_robots_z_[i].pop();
-      virtual_robots_u_[i].pop();
+      if (-virtual_robot_id == robots_[i]->getId())
+      {
+        virtual_robot_index = i;
+        break;
+      }
+    }
+    
+    if (virtual_robots_u_[virtual_robot_id].size() > 0 && virtual_robots_z_[virtual_robot_id].size() > 0)
+    {
+      backward_weights = updateRobot(robots_[virtual_robot_index], -virtual_robots_u_[virtual_robot_id].top(), virtual_robots_z_[virtual_robot_id].top(), true);
+      virtual_robots_z_[virtual_robot_id].pop();
+      virtual_robots_u_[virtual_robot_id].pop();
     }
   }
 
@@ -91,7 +110,7 @@ void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std:
   {
     weights[i] = forward_weights[i] * backward_weights[i];
   }
-  
+
   std::vector<Particle> new_particles(particles_.size());
   for (size_t i = 0; i < particles_.size(); i++)
   {
@@ -100,12 +119,17 @@ void DecMultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std:
   particles_ = new_particles;
 }
 
-std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
+std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features, const bool &backward)
 {
   std::vector<double> weights(particles_.size(), 1.0);
-  
+
   const size_t num_measurements = features.rows();
-  const int robot_id = robot->getId();
+  int robot_id = robot->getId();
+  if (backward)
+  {
+    robot_id = -robot_id;
+  }
+  
   if (num_measurements == 0)
   {
     for (Particle &p : particles_)
@@ -119,15 +143,13 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
     {
       const Eigen::VectorXd feature = features.row(i);
       const int id = feature[0];
-//      std::cout << "ggg id " << id << std::endl;
-
       int robot_index = getRobotIndex(id);
       if (robot_index >= 0) // The feature is a robot
       {
         if (particles_[0].x_.find(id) == particles_[0].x_.end())
         {
-          virtual_robots_.push_back(robots_[robot_index]);
-          const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
+          virtual_robots_id_.push_back(-id);
+          Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
           for (Particle &p : particles_)
           {
             // initialize the state of the causal and virtual robot
@@ -135,10 +157,9 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
             // TODO: dimension
             Eigen::VectorXd pose(robot->getDim());
             pose << position[0], position[1], Utils::sampleUniform(-M_PI, M_PI); // Random orientation for each particle
-            
             p.x_[id] = pose;
             p.x_[-id] = pose;
-          }   
+          }
         }
         // ignore the measurement if the robot has been seen before
       }
@@ -149,11 +170,11 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
         {
           if (i == 0)
           {
-            weights[j] *= updateParticle(robot, particles_[j], u, feature); 
+            weights[j] *= updateParticle(robot, particles_[j], u, feature, backward);
           }
           else
           {
-            weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), feature);
+            weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), feature, backward);
           }
         }
       }
@@ -163,11 +184,17 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
 }
 
 // TODO: check if z_t is after applying u_t????
-double DecMultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
+
+double DecMultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature, const bool &backward)
 {
   double weight = initial_w_;
 
-  const int robot_id = robot->getId();    
+  int robot_id = robot->getId();
+  if (backward)
+  {
+    robot_id = -robot_id;
+  }
+    
   const int feature_id = feature[0];
   const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
   auto iter = p.features_.find(feature_id);

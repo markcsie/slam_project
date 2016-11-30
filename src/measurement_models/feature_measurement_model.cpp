@@ -27,7 +27,7 @@ Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_pt
       return predictMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
-  std::cerr << "FastSlam2::predictMeasurement ERROR" << std::endl;
+  std::cerr << "FeatureMeasurementModel::predictMeasurement ERROR" << std::endl;
 }
 
 Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
@@ -39,7 +39,7 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_pt
       return inverseMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), x, z);
     }
   }
-  std::cerr << "FastSlam2::inverseMeasurement ERROR" << std::endl;
+  std::cerr << "FeatureMeasurementModel::inverseMeasurement ERROR" << std::endl;
 }
 
 Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
@@ -51,7 +51,7 @@ Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<cons
       return jacobianPose(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
-  std::cerr << "FastSlam2::jacobianPose ERROR" << std::endl;
+  std::cerr << "FeatureMeasurementModel::jacobianPose ERROR" << std::endl;
 }
 
 Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
@@ -63,7 +63,7 @@ Eigen::MatrixXd FeatureMeasurementModel::jacobianFeature(const std::shared_ptr<c
       return jacobianFeature(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), mean, x);
     }
   }
-  std::cerr << "FastSlam2::jacobianFeature ERROR" << std::endl;
+  std::cerr << "FeatureMeasurementModel::jacobianFeature ERROR" << std::endl;
 }
 
 Eigen::VectorXd FeatureMeasurementModel::predictMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
