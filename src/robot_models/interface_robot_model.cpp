@@ -39,6 +39,11 @@ Eigen::VectorXd RobotModelInterface::inverseMeasurement(const std::shared_ptr<co
   return measurement_model_->inverseMeasurement(this->shared_from_this(), map_model, x, z);
 }
 
+Eigen::VectorXd RobotModelInterface::sampleInverseMeasurement(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
+{
+  return measurement_model_->sampleInverseMeasurement(this->shared_from_this(), map_model, x, z);
+}
+
 Eigen::MatrixXd RobotModelInterface::jacobianPose(const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   return measurement_model_->jacobianPose(this->shared_from_this(), map_model, mean, x);

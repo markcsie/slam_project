@@ -42,6 +42,18 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_pt
   std::cerr << "FeatureMeasurementModel::inverseMeasurement ERROR" << std::endl;
 }
 
+Eigen::VectorXd FeatureMeasurementModel::sampleInverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
+{
+  if (robot_model->getType() == MobileRobot2dModel::TYPE)
+  {
+    if (map_model->getType() == FeatureMap2dModel::TYPE)
+    {
+      return sampleInverseMeasurement(std::static_pointer_cast<const MobileRobot2dModel>(robot_model), std::static_pointer_cast<const FeatureMap2dModel>(map_model), x, z);
+    }
+  }
+  std::cerr << "FeatureMeasurementModel::sampleInverseMeasurement ERROR" << std::endl;
+}
+
 Eigen::MatrixXd FeatureMeasurementModel::jacobianPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const
 {
   if (robot_model->getType() == MobileRobot2dModel::TYPE)
@@ -78,7 +90,19 @@ Eigen::VectorXd FeatureMeasurementModel::inverseMeasurement(const std::shared_pt
 {
   // mean_t = h^{-1}(x_t, z_t))
   Eigen::VectorXd mean(map_model->getDim());
+
   mean << x[0] + z[0] * std::cos(z[1] + x[2]), x[1] + z[0] * std::sin(z[1] + x[2]);
+  return mean;
+}
+
+Eigen::VectorXd FeatureMeasurementModel::sampleInverseMeasurement(const std::shared_ptr<const MobileRobot2dModel> &robot_model, const std::shared_ptr<const FeatureMap2dModel> &map_model, const Eigen::VectorXd& x, const Eigen::VectorXd& z) const
+{
+  // mean_t = h^{-1}(x_t, z_t))
+  Eigen::MatrixXd q_t = getQt();
+  double r_hat = z[0] - Utils::sampleGaussian(0, q_t(0, 0));
+  double phi_hat = z[1] - Utils::sampleGaussian(0, q_t(1, 1));
+  Eigen::VectorXd mean(map_model->getDim());
+  mean << x[0] + r_hat * std::cos(phi_hat + x[2]), x[1] + r_hat * std::sin(phi_hat + x[2]);
   return mean;
 }
 

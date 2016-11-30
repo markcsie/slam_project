@@ -153,7 +153,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
           for (Particle &p : particles_)
           {
             // initialize the state of the causal and virtual robot
-            Eigen::VectorXd position = robot->inverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
+            Eigen::VectorXd position = robot->sampleInverseMeasurement(map_, p.x_[robot_id], z); // mean_t = h^{-1}(x_t, z_t))
             // TODO: dimension
             Eigen::VectorXd pose(robot->getDim());
             pose << position[0], position[1], Utils::sampleUniform(-M_PI, M_PI); // Random orientation for each particle

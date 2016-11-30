@@ -14,6 +14,7 @@ class MeasurementModelInterface
 public:
   virtual Eigen::VectorXd predictMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model_ptr, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const = 0;
   virtual Eigen::VectorXd inverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model_ptr, const Eigen::VectorXd &x, const Eigen::VectorXd &z) const = 0;
+  virtual Eigen::VectorXd sampleInverseMeasurement(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model_ptr, const Eigen::VectorXd &x, const Eigen::VectorXd &z) const = 0;
   virtual Eigen::MatrixXd jacobianPose(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model_ptr, const Eigen::VectorXd& mean, const Eigen::VectorXd& x) const = 0;
   virtual Eigen::MatrixXd jacobianFeature(const std::shared_ptr<const RobotModelInterface> &robot_model, const std::shared_ptr<const MapModelInterface> &map_model_ptr, const Eigen::VectorXd &mean, const Eigen::VectorXd &x) const = 0;
 
