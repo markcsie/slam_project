@@ -116,7 +116,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       multi_slam_path.markers[i].points.push_back(p);
       multi_slam_path.markers[i].id = (i+2)*100000+k;
     }
-    marker_pub_path.publish(multi_slam_path);     
+    marker_pub_slam_path.publish(multi_slam_path);     
 
     //slam landmark and ellipse
     int len = subMsg.num;
@@ -190,17 +190,17 @@ void update(){
       p.x = multirobot_groundtruth[i][k].x;
       p.y = multirobot_groundtruth[i][k].y;
     
-      cout<<"p.x: "<<p.x<<endl;
-      cout<<"p.y: "<<p.y<<endl;
+    //  cout<<"p.x: "<<p.x<<endl;
+    //  cout<<"p.y: "<<p.y<<endl;
       multi_path.markers[i].points.clear();
-      cout<<"after p.x"<<endl;
+    //  cout<<"after p.x"<<endl;
       multi_path.markers[i].points.push_back(p);
-      cout<<"before id: "<<endl;
+    //  cout<<"before id: "<<endl;
       multi_path.markers[i].id = i*100000+k;
 
-      cout<<"end"<<endl;
+    //  cout<<"end"<<endl;
   }
-  cout<<"finish"<<endl;
+//  cout<<"finish"<<endl;
   marker_pub_path.publish(multi_path);     
 
 }

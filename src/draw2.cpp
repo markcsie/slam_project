@@ -122,12 +122,9 @@ void update(){
       p.x = multirobot_groundtruth[i][j].x;
       p.y = multirobot_groundtruth[i][j].y;
     
-      cout<<"p.x: "<<p.x<<endl;
-      cout<<"p.y: "<<p.y<<endl;
 //      multi_path.markers[i].points.clear();
-      cout<<"after p.x"<<endl;
       multi_path.markers[i].points.push_back(p);
-      cout<<"before id: "<<endl;
+
 //      multi_path.markers[i].id = i*100000+k;
 
     }
