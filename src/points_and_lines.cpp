@@ -54,6 +54,10 @@ vector<vector<geometry_msgs::PoseStamped>> poses;
 vector<vector<geometry_msgs::PoseStamped>> slam_poses;
 //geometry_msgs::PoseArray landmark_poses;
 
+// statistics
+std::ofstream robots_error_file(ros::package::getPath("slam_project") + "/results/robots_error.txt");
+std::ofstream landmarks_error_file(ros::package::getPath("slam_project") + "/results/landmarks_error.txt");
+
 void readGroundtruth(const int index, const string path_groundtruth)
 {
   ifstream file3(path_groundtruth);
@@ -389,7 +393,7 @@ void update_particle(const slam_project::Robot_Path_Map& subMsg){
 }
 
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
-{
+{  
 //    cout<<"call back start"<<endl;
     k++;
     cout<<k<<endl;
@@ -406,6 +410,38 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
     update_slampath(subMsg);
     update_landmark(subMsg);
     update_particle(subMsg);
+
+  //
+  for (size_t i = 0; i < subMsg.x.size(); i++)
+  {
+    // calculate error TODO: DecMultiFastSlam
+    double position_error = std::sqrt(std::pow(subMsg.x[i] - subMsg.rx[i], 2) + std::pow(subMsg.y[i] - subMsg.ry[i], 2));
+    robots_error_file << position_error << " ";
+  }
+  robots_error_file << std::endl;
+  robots_error_file.flush();
+  
+  for (size_t i = 0; i < subMsg.landmark_x.size(); i++)
+  {
+    size_t j = 0;
+    while (j < landmark_groundtruth.size()) 
+    {
+      if (landmark_groundtruth[j].subject == subMsg.landmark_id[i]) 
+      {
+        break;
+      }
+      j++;
+    }
+    // calculate error TODO: DecMultiFastSlam
+    double landmark_error_ = std::sqrt(std::pow(subMsg.landmark_x[i] - landmark_groundtruth[j].x, 2) + std::pow(subMsg.landmark_y[i] - landmark_groundtruth[j].y, 2));
+    landmarks_error_file << landmark_error_ << " ";
+  }
+  if (subMsg.landmark_x.size() > 0) 
+  {
+    landmarks_error_file << std::endl;
+  }
+  landmarks_error_file.flush();  
+    
     /*vector<int> rid;
     for (int i=0; i<subMsg.robot_id.size(); i++)
       rid.push_back(subMsg.robot_id[i]);

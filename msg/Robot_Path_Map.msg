@@ -4,6 +4,8 @@ int16[] robot_id
 float64[] x
 float64[] y
 float64[] orientation
+
+int16[] landmark_id
 float64[] landmark_x
 float64[] landmark_y
 std_msgs/Float64MultiArray[] landmark_cov
@@ -15,7 +17,7 @@ float64[] ry
 float64[] rorientation
 int32 id
 
-#robot real groundtruth
+# particle pose
 float64[] px
 float64[] py
 float64[] porientation

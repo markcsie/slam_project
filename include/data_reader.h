@@ -36,7 +36,6 @@ struct groundtruth{
 
 //Subject #    x [m]    y [m]    x std-dev [m]    y std-dev [m] 
 struct landmark{
-	int id;
 	int subject;
 	double x;
 	double y;

@@ -194,14 +194,10 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
   }
   
   msg2.num = features_average_x.size(); //TODO
-  msg2.landmark_x.clear();
-  msg2.landmark_y.clear();
-  msg2.landmark_cov.clear();
-
   msg2.landmark_x.resize(msg2.num); //TODO
   msg2.landmark_y.resize(msg2.num);
+  msg2.landmark_id.resize(msg2.num);
   msg2.landmark_cov.resize(msg2.num);
-
 
   int i = 0;
   //  cout << "map size: " << average_features.size() << endl;
@@ -216,6 +212,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     //  for( const auto& n : p.features_ ) {
     msg2.landmark_x[i] = n->second[0];
     msg2.landmark_y[i] = n->second[1];
+    msg2.landmark_id[i] = n->first;
 //    std::cout << "ggg ******* landmark " << n->second.transpose() << std::endl;
 
     msg2.landmark_cov[i].layout.dim.clear();
@@ -413,7 +410,6 @@ int main(int argc, char **argv)
   
   std::vector<Eigen::VectorXd> initial_x(robots.size(), Eigen::VectorXd::Zero(3)); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x[0] << 1.916028, -2.676211, 0.390500;
-//  initial_x[0] << 1.683400, 2.628217, 1.366200;
   initial_x[1] << 0.611662, -3.520002, 0.319200;
   initial_x[2] << 1.683400, 2.628217, 1.366200;
   initial_x[3] << 3.890500, 0.595554, 2.095700;
