@@ -100,6 +100,7 @@ add_executable(slam_runner_node
   src/fast_slam.cpp
   src/fast_slam2.cpp
   src/multi_fast_slam.cpp
+  src/multi_fast_slam2.cpp
   src/dec_multi_fast_slam.cpp
   src/motion_models/velocity_motion_model.cpp
   src/measurement_models/feature_measurement_model.cpp

@@ -32,6 +32,7 @@ private:
   FastSlam fast_slam_; // TODO: polymorphism for SLAM algorithm?
   FastSlam2 fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   MultiFastSlam multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
+  MultiFastSlam multi_fast_slam2_; // TODO: polymorphism for SLAM algorithm?
   DecMultiFastSlam dec_multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
   
   std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
@@ -49,6 +50,7 @@ SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::Vec
 fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map, data_robot_num),
+multi_fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robots, map, data_robot_num),
 dec_multi_fast_slam_(num_particles, initial_x[0], initial_cov, initial_w, robots, map, data_robot_num),
 robots_(robots),  
 frame_count_(0),
@@ -60,7 +62,7 @@ data_robot_num_(data_robot_num)
 SlamRunner::SlamRunner(const SlamRunner& other) // TODO:
 :
 fast_slam_(other.fast_slam_), fast_slam2_(other.fast_slam2_),
-multi_fast_slam_(other.multi_fast_slam_), dec_multi_fast_slam_(other.dec_multi_fast_slam_),
+multi_fast_slam_(other.multi_fast_slam_), multi_fast_slam2_(other.multi_fast_slam2_), dec_multi_fast_slam_(other.dec_multi_fast_slam_),
 frame_count_(other.frame_count_)
 {
 }
@@ -276,19 +278,22 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   
   if (msg.robot_num == 1) 
   {
-//    fast_slam_.process(multi_u[0], multi_z[0]);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
+    fast_slam_.process(multi_u[0], multi_z[0]);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
     
-    fast_slam2_.process(multi_u[0], multi_z[0]);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
+//    fast_slam2_.process(multi_u[0], multi_z[0]);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
     
     dataPublisher.publish(path_msg);
   }
   else
   {
     // Centralized
-    multi_fast_slam_.process(multi_u, multi_z);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles());
+//    multi_fast_slam_.process(multi_u, multi_z);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles());
+    
+    multi_fast_slam2_.process(multi_u, multi_z);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam2_.getParticles());
     
 //    dec_multi_fast_slam_.process(multi_u, multi_z);
 //    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, dec_multi_fast_slam_.getParticles());

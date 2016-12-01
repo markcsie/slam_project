@@ -1,10 +1,10 @@
-#include "../include/multi_fast_slam.h"
+#include "../include/multi_fast_slam2.h"
 
 #include <iostream>
 
 #include "utils/eigenmvn.h"
 
-MultiFastSlam::MultiFastSlam(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map, const size_t &data_robot_num) :
+MultiFastSlam2::MultiFastSlam2(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map, const size_t &data_robot_num) :
 particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
 {
   assert(initial_x.size() == robots_.size());
@@ -18,34 +18,33 @@ particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
   }
 }
 
-MultiFastSlam::MultiFastSlam(const MultiFastSlam& other)
+MultiFastSlam2::MultiFastSlam2(const MultiFastSlam2& other)
 {
   // TODO:
 }
 
-MultiFastSlam::~MultiFastSlam()
+MultiFastSlam2::~MultiFastSlam2()
 {
 }
 
-std::vector<Particle> MultiFastSlam::getParticles()
+std::vector<Particle> MultiFastSlam2::getParticles()
 {
   return particles_;
 }
 
-Particle MultiFastSlam::getParticle(const size_t &i)
+Particle MultiFastSlam2::getParticle(const size_t &i)
 {
   return particles_[i];
 }
 
-void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
+void MultiFastSlam2::process(const std::vector<Eigen::VectorXd> &u, const std::vector<Eigen::MatrixXd> &features)
 {
 //  assert(u.size() == robots_.size() && u.size() == features.size());
   std::vector<double> weights(particles_.size(), 1.0);
   for (size_t i = 0; i < u.size(); i++)
   {
-    //    std::cout << "ggg u[i] " << u[i].transpose() << std::endl;
+//    std::cout << "ggg u[i] " << u[i].transpose() << std::endl;
     std::vector<double> weights_per_robot = updateRobot(robots_[i], u[i], features[i]);
-
     for (size_t j = 0; j < particles_.size(); j++)
     {
       weights[j] *= weights_per_robot[j];
@@ -62,7 +61,7 @@ void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::ve
   particles_ = new_particles;
 }
 
-std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
+std::vector<double> MultiFastSlam2::updateRobot(const std::shared_ptr<const RobotModelInterface> &robot, const Eigen::VectorXd &u, const Eigen::MatrixXd &features)
 {
   std::vector<double> weights(particles_.size(), 1.0);
 
@@ -101,7 +100,7 @@ std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const Robot
 }
 
 // TODO: check if z_t is after applying u_t????
-double MultiFastSlam::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
+double MultiFastSlam2::updateParticle(const std::shared_ptr<const RobotModelInterface> &robot, Particle &p, const Eigen::VectorXd &u, const Eigen::VectorXd &feature)
 {
   double weight = initial_w_;
 

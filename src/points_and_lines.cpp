@@ -412,12 +412,13 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
     update_particle(subMsg);
 
   //
-  for (size_t i = 0; i < subMsg.x.size(); i++)
-  {
+//  for (size_t i = 0; i < subMsg.x.size(); i++)
+//  {
     // calculate error TODO: DecMultiFastSlam
-    double position_error = std::sqrt(std::pow(subMsg.x[i] - subMsg.rx[i], 2) + std::pow(subMsg.y[i] - subMsg.ry[i], 2));
+//    std::cout << "subMsg.robot_id[i] " << subMsg.robot_id[i] << std::endl;
+    double position_error = std::sqrt(std::pow(subMsg.x[2] - subMsg.rx[0], 2) + std::pow(subMsg.y[2] - subMsg.ry[0], 2));
     robots_error_file << position_error << " ";
-  }
+//  }
   robots_error_file << std::endl;
   robots_error_file.flush();
   
