@@ -8,6 +8,8 @@ slam:
   initial_w: 1.0
   # motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
   # foward_velocity, angular_velocity, theta
-  motion_noise: [5, 5, 5, 5, 5, 5]
+  #motion_noise: [0.08, 0.08, 0.025, 0.025, 0.014, 0.014]
+  motion_noise: [1, 2, 0.3, 0.15, 0.2, 0.04]
   
+  #measurement_noise: [0.0167, 0.000736589]
   measurement_noise: [0.0167, 0.000736589]

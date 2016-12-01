@@ -7,12 +7,13 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1
+        - /Path2
+        - /Path3
         - /Path6
         - /Path7
         - /Path8
         - /Path10
         - /PoseArray1
-        - /PoseArray1/Status1
         - /PoseArray2
       Splitter Ratio: 0.5
     Tree Height: 775
@@ -72,8 +73,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -94,8 +95,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -116,8 +117,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -182,8 +183,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -204,8 +205,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -226,8 +227,8 @@ Visualization Manager:
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.0500000007
       Name: Path
       Offset:
         X: 0
@@ -305,7 +306,7 @@ Visualization Manager:
       Axes Length: 0.300000012
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
-      Color: 66; 180; 255
+      Color: 140; 255; 236
       Enabled: true
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
@@ -340,7 +341,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.7351933
+      Distance: 16.630024
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -354,10 +355,10 @@ Visualization Manager:
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.53979635
+      Pitch: 1.55979633
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.24038863
+      Yaw: 3.1453836
     Saved: ~
 Window Geometry:
   Displays:

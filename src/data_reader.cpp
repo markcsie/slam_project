@@ -341,7 +341,7 @@ int main(int argc, char **argv)
   ros::ServiceServer service = node.advertiseService("requestData", add);
   ROS_INFO("Ready to send barcode data.");
   
-  ros::Rate rate(100);
+  ros::Rate rate(200);
   ROS_INFO("start spinning");
   int j = 0;
   kk.resize(num_robots, 0);
