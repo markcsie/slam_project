@@ -6,13 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Marker1
-        - /Path1
-        - /Path6
-        - /Path7
-        - /Path8
-        - /Path9
         - /Path10
+        - /PoseArray1
+        - /PoseArray1/Status1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -283,6 +279,22 @@ Visualization Manager:
       Topic: slam_path5
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.00999999978
+      Axes Length: 0.00999999978
+      Axes Radius: 0.00999999978
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
+      Name: PoseArray
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Arrow (Flat)
+      Topic: slam_landmark
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -321,10 +333,10 @@ Visualization Manager:
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: -0.829601169
+      Pitch: 0.995202959
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.3653959
+      Yaw: 2.26539588
     Saved: ~
 Window Geometry:
   Displays:

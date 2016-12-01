@@ -2,6 +2,7 @@
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/PoseArray.h>
 #include <ros/package.h>
 #include "../include/data_reader.h"
 #include <cmath>
@@ -32,6 +33,8 @@ ros::Publisher pub_slam_path3;
 ros::Publisher pub_slam_path4;
 ros::Publisher pub_slam_path5;
 
+ros::Publisher pub_landmark;
+
 geometry_msgs::Point p;
 ros::Publisher marker_pub3;
 ros::Publisher marker_pub4;
@@ -48,6 +51,8 @@ std::vector<std::vector<groundtruth> > multirobot_groundtruth;
 vector<vector<groundtruth> > multi_groundtruth;
 vector<vector<geometry_msgs::PoseStamped>> poses;
 vector<vector<geometry_msgs::PoseStamped>> slam_poses;
+geometry_msgs::PoseArray landmark_poses;
+
 void readGroundtruth(const int index, const string path_groundtruth)
 {
   ifstream file3(path_groundtruth);
@@ -339,6 +344,32 @@ void update_slampath(const slam_project::Robot_Path_Map& subMsg){
   pub_slam_path4.publish(slam_path4);
   pub_slam_path5.publish(slam_path5);
 }
+
+void update_landmark(const slam_project::Robot_Path_Map& subMsg){
+  int len = subMsg.num;
+  int valid_len = 0, valid_i=0;
+  for (int i=0; i<len; i++)
+    if (!std::isnan(subMsg.landmark_x[i] && !std::isnan(subMsg.landmark_y[i]) ))
+        valid_len ++;
+  for (int i = 0; i < len; i++){
+    if (std::isnan(subMsg.landmark_x[i]) || std::isnan(subMsg.landmark_y[i]))
+      continue;
+/*    p.x = subMsg.landmark_x[i];
+    p.y = subMsg.landmark_y[i];
+//    points4.points.clear();
+    points4.points.push_back(p);
+    points4.id = k*20+i;*/
+
+    geometry_msgs::Pose cur_p;
+    cur_p.position.x = subMsg.landmark_x[i];
+    cur_p.position.y = subMsg.landmark_y[i];
+
+    landmark_poses.poses.push_back(cur_p);
+  }
+  pub_landmark.publish(landmark_poses);
+}
+
+
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
 //    cout<<"call back start"<<endl;
@@ -355,6 +386,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 
     update_groundtruth(subMsg);
     update_slampath(subMsg);
+    update_landmark(subMsg);
     /*vector<int> rid;
     for (int i=0; i<subMsg.robot_id.size(); i++)
       rid.push_back(subMsg.robot_id[i]);
@@ -524,12 +556,15 @@ int main(int argc, char** argv)
   pub_slam_path4 = n.advertise<nav_msgs::Path>("slam_path4", 10000);
   pub_slam_path5 = n.advertise<nav_msgs::Path>("slam_path5", 10000);
 
-
+  //landmark
+  landmark_poses.header.frame_id = "map";
+  landmark_poses.header.stamp = ros::Time::now();
+  pub_landmark = n.advertise<geometry_msgs::PoseArray>("slam_landmark", 10000);
 
   //groundtruth landmark
   marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
   //slam landmark
-  marker_pub4 = n.advertise<visualization_msgs::Marker>("visualization_marker4", 100000);
+  marker_pub4 = n.advertise<visualization_msgs::Marker>("slam_landmark2", 100000);
   //ellipse
   marker_pub5 = n.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100000);
   //multi_path groundtruth
