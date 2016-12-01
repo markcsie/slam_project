@@ -64,7 +64,7 @@ void FastSlam2::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &feature
         }
         else
         {
-          weights[j] *= updateParticle(particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), features.row(i));
+          weights[j] *= updateParticle(particles_[j], Eigen::VectorXd::Zero(u.rows()), features.row(i));
         }
       }
     }

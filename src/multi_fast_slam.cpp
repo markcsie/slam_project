@@ -83,7 +83,7 @@ std::vector<double> MultiFastSlam::updateRobot(const std::shared_ptr<const Robot
         }
         else
         {
-          weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), features.row(i));
+          weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows()), features.row(i));
         }
       }
     }

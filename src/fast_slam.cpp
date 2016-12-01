@@ -45,15 +45,17 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
   {
     for (Particle &p : particles_)
     {
-      //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
+//      std::cout << "ggg p.x_ " << p.x_[robot_id_].transpose() << std::endl;
       p.x_[robot_id_] = robot_->samplePose(p.x_[robot_id_], u); // x_t ~ p(x_t| x_{t-1}, u_t)
-      //      std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
+//      std::cout << "ggg p.x_ " << p.x_[robot_id_].transpose() << std::endl;
     }
   }
   else
   {
+    std::cout << "ggg features " << std::endl;
+    std::cout << features << std::endl;
     // implement the algorithm in Table 13.1
-    std::vector<double> weights(particles_.size());
+    std::vector<double> weights(particles_.size(), 1.0);
     for (size_t i = 0; i < num_measurements; i++)
     {
       for (size_t j = 0; j < particles_.size(); j++)
@@ -64,7 +66,7 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
         }
         else
         {
-          weights[j] *= updateParticle(particles_[j], u.Zero(u.rows(), u.cols()), features.row(i));
+          weights[j] *= updateParticle(particles_[j], Eigen::VectorXd::Zero(u.rows()), features.row(i));
         }
       }
     }

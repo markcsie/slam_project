@@ -199,7 +199,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     //  for( const auto& n : p.features_ ) {
     msg2.landmark_x[i] = n->second[0];
     msg2.landmark_y[i] = n->second[1];
-    //    cout << "ggg ******* landmark " << n->second.mean_[0] << " " << n->second.mean_[1] << endl;
+//    std::cout << "ggg ******* landmark " << n->second.transpose() << std::endl;
 
     msg2.landmark_cov[i].layout.dim.clear();
     msg2.landmark_cov[i].layout.dim.resize(2);
@@ -221,6 +221,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
 
     i++;
   }
+//  std::cout << "ggg *************" << std::endl;
 
   return msg2;
 }
@@ -262,22 +263,22 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   
   if (msg.robot_num == 1) 
   {
-//    fast_slam_.process(multi_u[0], multi_z[0]);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
+    fast_slam_.process(multi_u[0], multi_z[0]);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
     
-    fast_slam2_.process(multi_u[0], multi_z[0]);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
+//    fast_slam2_.process(multi_u[0], multi_z[0]);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
     
     dataPublisher.publish(path_msg);
   }
   else
   {
     // Centralized
-//    multi_fast_slam_.process(multi_u, multi_z);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles(), multi_u.size());
+    multi_fast_slam_.process(multi_u, multi_z);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, multi_fast_slam_.getParticles());
     
-    dec_multi_fast_slam_.process(multi_u, multi_z);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, dec_multi_fast_slam_.getParticles());
+//    dec_multi_fast_slam_.process(multi_u, multi_z);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, dec_multi_fast_slam_.getParticles());
 
     dataPublisher.publish(path_msg);
   }

@@ -115,10 +115,13 @@ Eigen::VectorXd VelocityMotionModel::samplePose(const std::shared_ptr<const Mobi
 {
   // x_t ~ p(x_t| x_{t-1}, u_t)
   Eigen::VectorXd x_next(robot_model->getDim());
-//  std::cout << "ggg alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2) " << alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2) << std::endl;
+//  std::cout << "ggg u " << u.transpose() << std::endl;
   double v_hat = u[0] + Utils::sampleGaussian(0, alphas_[0] * std::pow(u[0], 2) + alphas_[1] * std::pow(u[1], 2));
   double w_hat = u[1] + Utils::sampleGaussian(0, alphas_[2] * std::pow(u[0], 2) + alphas_[3] * std::pow(u[1], 2));
   double gamma_hat = Utils::sampleGaussian(0, alphas_[4] * std::pow(u[0], 2) + alphas_[5] * std::pow(u[1], 2));
+//  std::cout << "ggg v_hat " << v_hat << std::endl;
+//  std::cout << "ggg w_hat " << w_hat << std::endl;
+//  std::cout << "ggg gamma_hat " << gamma_hat << std::endl;
   if (w_hat == 0)
   {
     x_next << x[0] + v_hat * std::cos(x[2]) * delta_t_, x[1] + v_hat * std::sin(x[2]) * delta_t_, x[2] + gamma_hat * delta_t_;

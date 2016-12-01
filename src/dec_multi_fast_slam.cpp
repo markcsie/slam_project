@@ -174,7 +174,7 @@ std::vector<double> DecMultiFastSlam::updateRobot(const std::shared_ptr<const Ro
           }
           else
           {
-            weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows(), u.cols()), feature, backward);
+            weights[j] *= updateParticle(robot, particles_[j], Eigen::VectorXd::Zero(u.rows()), feature, backward);
           }
         }
       }
