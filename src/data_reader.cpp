@@ -352,7 +352,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
 //    cout<<j<<endl;
-    if (j < 7000)
+    if (j < 70000)
     {
 //      dataPublisher2.publish(sendMsg_Odometry(j));
       dataPublisher2.publish(sendMultiMsg_Odometry(j, num_robots));

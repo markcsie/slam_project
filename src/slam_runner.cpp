@@ -156,8 +156,21 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
   }
   
   slam_project::Robot_Path_Map msg2;
+  // particles
+  msg2.px.resize(num_particles);
+  msg2.py.resize(num_particles);
+  msg2.porientation.resize(num_particles);
+  for (size_t i = 0; i < num_particles; i++) 
+  {
+    auto it = particles[i].x_.begin(); // TODO: only one robot now
+    msg2.px[i] = (it->second)[0];
+    msg2.py[i] = (it->second)[1];
+    msg2.porientation[i] = (it->second)[2];
+  }
+  //
   msg2.x.resize(num_robots_particle);
   msg2.y.resize(num_robots_particle);
+  msg2.orientation.resize(num_robots_particle);
   msg2.robot_id.resize(num_robots_particle);
   for (int i = 0; i < msg2.x.size(); i++)
   {
@@ -166,15 +179,18 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
     msg2.robot_id[i] = it->first;
     msg2.x[i] = average_x[i][0];
     msg2.y[i] = average_x[i][1];
+    msg2.orientation[i] = average_x[i][2];
 //    std::cout << "msg2.robot_id[i] " << msg2.robot_id[i] << " " << average_x[i].transpose() << std::endl;
   }
   
   msg2.rx.resize(data_robot_num_);
   msg2.ry.resize(data_robot_num_);
+  msg2.rorientation.resize(data_robot_num_);
   for (int i = 0; i < msg2.rx.size(); i++)
   {
     msg2.rx[i] = multirobot_groundtruth[i][frame_id].x;
     msg2.ry[i] = multirobot_groundtruth[i][frame_id].y;
+    msg2.rorientation[i] = multirobot_groundtruth[i][frame_id].orientation;
   }
   
   msg2.num = features_average_x.size(); //TODO
@@ -263,11 +279,11 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   
   if (msg.robot_num == 1) 
   {
-    fast_slam_.process(multi_u[0], multi_z[0]);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
+//    fast_slam_.process(multi_u[0], multi_z[0]);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
     
-//    fast_slam2_.process(multi_u[0], multi_z[0]);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
+    fast_slam2_.process(multi_u[0], multi_z[0]);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
     
     dataPublisher.publish(path_msg);
   }
@@ -382,6 +398,7 @@ int main(int argc, char **argv)
   double delta_t = 0.02; // TODO: from data_reader
   VelocityMotionModel velocity_model(motion_noise, delta_t);
   
+  // TODO: flexible length of robots
   std::vector<std::shared_ptr<const RobotModelInterface>> robots;
   MobileRobot2dModel robot_1(5, velocity_model, feature_model);
   MobileRobot2dModel robot_2(14, velocity_model, feature_model);
@@ -395,7 +412,8 @@ int main(int argc, char **argv)
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_5)); // robot 5 // TODO: different models?
   
   std::vector<Eigen::VectorXd> initial_x(robots.size(), Eigen::VectorXd::Zero(3)); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
-  initial_x[0] << 1.916028, -2.676211, 0.390500;
+//  initial_x[0] << 1.916028, -2.676211, 0.390500;
+  initial_x[0] << 1.683400, 2.628217, 1.366200;
   initial_x[1] << 0.611662, -3.520002, 0.319200;
   initial_x[2] << 1.683400, 2.628217, 1.366200;
   initial_x[3] << 3.890500, 0.595554, 2.095700;

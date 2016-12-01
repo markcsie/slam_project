@@ -14,3 +14,8 @@ float64[] rx
 float64[] ry
 float64[] rorientation
 int32 id
+
+#robot real groundtruth
+float64[] px
+float64[] py
+float64[] porientation
