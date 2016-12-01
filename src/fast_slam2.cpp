@@ -90,62 +90,44 @@ double FastSlam2::updateParticle(Particle &p, const Eigen::VectorXd &u, const Ei
 
   const int feature_id = feature[0];
   const Eigen::VectorXd z = feature.block(1, 0, feature.rows() - 1, 1);
-  //  std::cout << "ggg feature_id " << feature_id << std::endl;
-  //  std::cout << "ggg z " << z.transpose() << std::endl;
   auto iter = p.features_.find(feature_id);
   if (iter == p.features_.end()) // first time seeing the feature, do initialization 
   {
-    //    std::cout << "ggg new feature_id: " << feature_id << std::endl;
     p.x_[robot_id_] = robot_->samplePose(p.x_[robot_id_], u);
-    //    std::cout << "ggg p.x_ " << p.x_.transpose() << std::endl;
     p.features_[feature_id].mean_ = robot_->inverseMeasurement(map_, p.x_[robot_id_], z); // mean_t = h^{-1}(x_t, z_t))
-    //    std::cout << "ggg p.features_[feature_id].mean_ " << p.features_[feature_id].mean_.transpose() << std::endl;
     Eigen::MatrixXd H_m = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id_]);
     p.features_[feature_id].covariance_ = H_m.inverse() * robot_->getQt() * H_m.inverse().transpose();
-    //    std::cout << "ggg p.features_[feature_id].covariance_ \n" << p.features_[feature_id].covariance_ << std::endl;
     weight = initial_w_;
   }
   else
   {
-    //    std::cout << "ggg update feature_id: " << feature_id << std::endl;
     Eigen::VectorXd x_t = robot_->predictPose(p.x_[robot_id_], u); // g(x_{t-1}, u_t)
-    //    std::cout << "ggg x_t.transpose() " << x_t.transpose() << std::endl;
     Eigen::MatrixXd H_m = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, x_t);
 
-    //    std::cout << "ggg H_m \n" << H_m << std::endl;
-
     Eigen::MatrixXd Q_j = robot_->getQt() + H_m * p.features_[feature_id].covariance_ * H_m.transpose();
-    //    std::cout << "ggg Q_j \n" << Q_j << std::endl;
 
     Eigen::MatrixXd H_x = robot_->jacobianPose(map_, p.features_[feature_id].mean_, x_t); // mean_t = h^{-1}(x_t, z_t))  
-    //    std::cout << "ggg H_x \n" << H_x << std::endl;
     Eigen::MatrixXd R_t = robot_->calculateRt(p.x_[robot_id_], u, p.cov_);
-
-    //    std::cout << "ggg R_t \n" << R_t << std::endl;
     p.cov_ = (H_x.transpose() * Q_j.inverse() * H_x + R_t.inverse()).inverse();
-    //    std::cout << "ggg Q_j.inverse() \n" << Q_j.inverse() << std::endl;
-    //    std::cout << "ggg R_t.inverse() \n" << R_t.inverse() << std::endl;
-    //    std::cout << "ggg (H_x.transpose() * Q_j.inverse() * H_x + R_t.inverse()) \n" << (H_x.transpose() * Q_j.inverse() * H_x + R_t.inverse()) << std::endl;
-
+    
     Eigen::VectorXd z_bar = robot_->predictMeasurement(map_, p.features_[feature_id].mean_, x_t); // h(mean_{t-1}, x)
-    //    std::cout << "ggg z_bar.transpose() " << z_bar.transpose() << std::endl;
-    //    std::cout << "ggg z.transpose() " << z.transpose() << std::endl;
-    Eigen::VectorXd mean_x = p.cov_ * H_x.transpose() * Q_j.inverse() * (z - z_bar) + x_t;
-    //    std::cout << "ggg mean_x.transpose() " << mean_x.transpose() << std::endl;
+    Eigen::VectorXd z_bar_difference = z - z_bar;
+    z_bar_difference[1] = std::remainder(z_bar_difference[1], 2 * M_PI);
+    Eigen::VectorXd mean_x = p.cov_ * H_x.transpose() * Q_j.inverse() * z_bar_difference + x_t;
 
     // EKF update
     Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H_m.transpose() * Q_j.inverse(); // Kalman gain
 
     p.x_[robot_id_] = Utils::sampleMultivariateGaussian(mean_x, p.cov_); // update pose
-    //    std::cout << "ggg p.x_.transpose() " << p.x_.transpose() << std::endl;
     Eigen::VectorXd z_hat = robot_->predictMeasurement(map_, p.features_[feature_id].mean_, p.x_[robot_id_]); // h(mean_{t-1}, x)
+    Eigen::VectorXd z_hat_difference = z - z_hat;
+    z_hat_difference[1] = std::remainder(z_hat_difference[1], 2 * M_PI);
 
-    p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean
+    p.features_[feature_id].mean_ += K * z_hat_difference; // update feature mean
     p.features_[feature_id].covariance_ = (Eigen::MatrixXd::Identity(K.rows(), K.rows()) - K * H_m) * p.features_[feature_id].covariance_; // update feature covariance
 
     Eigen::MatrixXd L = H_x * R_t * H_x.transpose() + H_m * p.features_[feature_id].covariance_ * H_m.transpose() + robot_->getQt();
-    double temp = (z - z_hat).transpose() * L.inverse() * (z - z_hat);
-    //    std::cout << "ggg temp " << temp << std::endl;
+    double temp = z_hat_difference.transpose() * L.inverse() * z_hat_difference;
     weight = (1 / std::sqrt((2 * M_PI * L).determinant())) * std::exp(temp / -2);
   }
 

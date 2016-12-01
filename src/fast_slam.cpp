@@ -107,9 +107,11 @@ double FastSlam::updateParticle(Particle &p, const Eigen::VectorXd &u, const Eig
     Eigen::MatrixXd H = robot_->jacobianFeature(map_, p.features_[feature_id].mean_, p.x_[robot_id_]);
     Eigen::MatrixXd Q = H * p.features_[feature_id].covariance_ * H.transpose() + robot_->getQt();
     Eigen::MatrixXd K = p.features_[feature_id].covariance_ * H.transpose() * Q.inverse(); // Kalman gain
-    p.features_[feature_id].mean_ += K * (z - z_hat); // update feature mean
+    Eigen::VectorXd z_hat_difference = z - z_hat;
+    z_hat_difference[1] = std::remainder(z_hat_difference[1], 2 * M_PI);
+    p.features_[feature_id].mean_ += K * z_hat_difference; // update feature mean  
     p.features_[feature_id].covariance_ = (Eigen::MatrixXd::Identity(K.rows(), K.rows()) - K * H) * p.features_[feature_id].covariance_; // update feature covariance
-    double temp = (z - z_hat).transpose() * Q.inverse() * (z - z_hat);
+    double temp = z_hat_difference.transpose() * Q.inverse() * z_hat_difference;
 //    std::cout << "feature weight " << (1 / std::sqrt((2 * M_PI * Q).determinant())) * std::exp(temp / -2) << std::endl;
     weight = (1 / std::sqrt((2 * M_PI * Q).determinant())) * std::exp(temp / -2);
 //    std::cout << "weight " << weight << std::endl;
