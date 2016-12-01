@@ -6,6 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Path1
+        - /Path6
+        - /Path7
+        - /Path8
         - /Path10
         - /PoseArray1
         - /PoseArray1/Status1
@@ -280,7 +284,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Alpha: 1
-      Arrow Length: 0.00999999978
+      Arrow Length: 0.100000001
       Axes Length: 0.00999999978
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
@@ -333,10 +337,10 @@ Visualization Manager:
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.995202959
+      Pitch: 0.459796786
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.26539588
+      Yaw: 3.46539474
     Saved: ~
 Window Geometry:
   Displays:

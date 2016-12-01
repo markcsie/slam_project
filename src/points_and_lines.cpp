@@ -51,7 +51,7 @@ std::vector<std::vector<groundtruth> > multirobot_groundtruth;
 vector<vector<groundtruth> > multi_groundtruth;
 vector<vector<geometry_msgs::PoseStamped>> poses;
 vector<vector<geometry_msgs::PoseStamped>> slam_poses;
-geometry_msgs::PoseArray landmark_poses;
+//geometry_msgs::PoseArray landmark_poses;
 
 void readGroundtruth(const int index, const string path_groundtruth)
 {
@@ -348,6 +348,10 @@ void update_slampath(const slam_project::Robot_Path_Map& subMsg){
 void update_landmark(const slam_project::Robot_Path_Map& subMsg){
   int len = subMsg.num;
   int valid_len = 0, valid_i=0;
+  geometry_msgs::PoseArray landmark_poses;
+  landmark_poses.header.frame_id = "map";
+  landmark_poses.header.stamp = ros::Time::now();
+ 
   for (int i=0; i<len; i++)
     if (!std::isnan(subMsg.landmark_x[i] && !std::isnan(subMsg.landmark_y[i]) ))
         valid_len ++;
@@ -557,8 +561,8 @@ int main(int argc, char** argv)
   pub_slam_path5 = n.advertise<nav_msgs::Path>("slam_path5", 10000);
 
   //landmark
-  landmark_poses.header.frame_id = "map";
-  landmark_poses.header.stamp = ros::Time::now();
+//  landmark_poses.header.frame_id = "map";
+//  landmark_poses.header.stamp = ros::Time::now();
   pub_landmark = n.advertise<geometry_msgs::PoseArray>("slam_landmark", 10000);
 
   //groundtruth landmark
