@@ -21,7 +21,7 @@ std::vector<std::vector<groundtruth> > multirobot_groundtruth;
 class SlamRunner
 {
 public:
-  SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, MapModelInterface &map);
+  SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, MapModelInterface &map, const size_t &data_robot_num);
   SlamRunner(const SlamRunner& other);
   virtual ~SlamRunner();
 
@@ -35,8 +35,8 @@ private:
   DecMultiFastSlam dec_multi_fast_slam_; // TODO: polymorphism for SLAM algorithm?
   
   std::vector<std::shared_ptr<const RobotModelInterface>> robots_;
-  size_t msg_robot_num_;
-
+  size_t data_robot_num_;
+          
   size_t frame_count_;
   double last_time_;
 
@@ -44,17 +44,17 @@ private:
 
 };
 
-SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, MapModelInterface &map)
+SlamRunner::SlamRunner(const size_t &num_particles, const std::vector<Eigen::VectorXd> &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, MapModelInterface &map, const size_t &data_robot_num)
 :
 fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
 fast_slam2_(num_particles, initial_x, initial_cov, initial_w, robots[0], map),
-multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map),
-dec_multi_fast_slam_(num_particles, initial_x[0], initial_cov, initial_w, robots, map),
+multi_fast_slam_(num_particles, initial_x, initial_cov, initial_w, robots, map, data_robot_num),
+dec_multi_fast_slam_(num_particles, initial_x[0], initial_cov, initial_w, robots, map, data_robot_num),
 robots_(robots),  
 frame_count_(0),
 last_time_(0.0),
-msg_robot_num_(0)
-{ 
+data_robot_num_(data_robot_num)
+{
 }
 
 SlamRunner::SlamRunner(const SlamRunner& other) // TODO:
@@ -99,7 +99,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
 {
   size_t num_robots_particle = particles[0].x_.size();
   const size_t num_particles = particles.size();
-//  std::cout << "ggg num_robots " << num_robots << std::endl;
+//  std::cout << "ggg num_robots_particle " << num_robots_particle << std::endl;
 
   std::vector<Eigen::VectorXd> average_x(num_robots_particle, Eigen::VectorXd::Zero(3));
   std::unordered_map<int, Eigen::VectorXd> features_average_x;
@@ -129,6 +129,7 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
   for (size_t i = 0; i < num_robots_particle; i++)
   {
     average_x[i] /= num_particles;
+//    std::cout << "ggg average_x[i] " << average_x[i].transpose() << std::endl;
   }
 
   for (const auto &it : features_average_x)
@@ -168,8 +169,8 @@ slam_project::Robot_Path_Map SlamRunner::postProcess(const int &frame_id, const 
 //    std::cout << "msg2.robot_id[i] " << msg2.robot_id[i] << " " << average_x[i].transpose() << std::endl;
   }
   
-  msg2.rx.resize(msg_robot_num_);
-  msg2.ry.resize(msg_robot_num_);
+  msg2.rx.resize(data_robot_num_);
+  msg2.ry.resize(data_robot_num_);
   for (int i = 0; i < msg2.rx.size(); i++)
   {
     msg2.rx[i] = multirobot_groundtruth[i][frame_id].x;
@@ -230,11 +231,10 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
 {
   // TODO: multi-robot data
   //  cout << msg.forward_velocity[0] << endl;
+//  std::cout << "ggg msg.robot_num " << msg.robot_num << std::endl;
   assert(msg.robot_num <= robots_.size());
-  msg_robot_num_ = msg.robot_num;
   std::vector<Eigen::VectorXd> multi_u;
   std::vector<Eigen::MatrixXd> multi_z;
-//  std::cout << "ggg msg.robot_num " << msg.robot_num << std::endl;
   for (int i = 0; i < msg.robot_num; i++)
   {
     Eigen::VectorXd u(2);
@@ -348,10 +348,6 @@ int main(int argc, char **argv)
 
   //  std::cout.precision(20);
 
-  //read groundtruth data
-
-
-
   ros::init(argc, argv, "slam_runner");
   ros::NodeHandle node("~");
 
@@ -385,31 +381,35 @@ int main(int argc, char **argv)
   node.param("slam/motion_noise", motion_noise,{1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
   double delta_t = 0.02; // TODO: from data_reader
   VelocityMotionModel velocity_model(motion_noise, delta_t);
-
+  
   std::vector<std::shared_ptr<const RobotModelInterface>> robots;
   MobileRobot2dModel robot_1(5, velocity_model, feature_model);
   MobileRobot2dModel robot_2(14, velocity_model, feature_model);
   MobileRobot2dModel robot_3(41, velocity_model, feature_model);
   MobileRobot2dModel robot_4(32, velocity_model, feature_model);
-  MobileRobot2dModel robot_5(23, velocity_model, feature_model);
+  MobileRobot2dModel robot_5(23, velocity_model, feature_model); 
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_1)); // robot 1 // TODO: different models?
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_2)); // robot 2 // TODO: different models?
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_3)); // robot 3 // TODO: different models?
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_4)); // robot 4 // TODO: different models?
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_5)); // robot 5 // TODO: different models?
-
+  
   std::vector<Eigen::VectorXd> initial_x(robots.size(), Eigen::VectorXd::Zero(3)); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
   initial_x[0] << 1.916028, -2.676211, 0.390500;
   initial_x[1] << 0.611662, -3.520002, 0.319200;
   initial_x[2] << 1.683400, 2.628217, 1.366200;
   initial_x[3] << 3.890500, 0.595554, 2.095700;
   initial_x[4] << 3.493652, 2.576611, -0.506400;
-
+  
+  int num_robots; //number of robots
+  node.param<int>("data/num_robots", num_robots, 1);
+  std::cout << "num_robots " << num_robots << std::endl;
+  
   Eigen::MatrixXd initial_cov(3, 3); // TODO: parameter or random?
   initial_cov << 0.000001, 0, 0,
           0, 0.000001, 0,
           0, 0, 0.000001;
-  SlamRunner slam_runner(num_particles, initial_x, initial_cov, initial_w, robots, map); // TODO: dimension depends on the incoming data
+  SlamRunner slam_runner(num_particles, initial_x, initial_cov, initial_w, robots, map, static_cast<size_t>(num_robots)); // TODO: dimension depends on the incoming data
 
   //groundtruth
   multirobot_groundtruth.resize(robots.size());

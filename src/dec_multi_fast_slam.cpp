@@ -4,11 +4,11 @@
 
 #include "utils/eigenmvn.h"
 
-DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map) :
+DecMultiFastSlam::DecMultiFastSlam(const size_t &num_particles, const Eigen::VectorXd &initial_x, const Eigen::MatrixXd &initial_cov, const double &initial_w, const std::vector<std::shared_ptr<const RobotModelInterface>> &robots, const MapModelInterface &map, const size_t &data_robot_num) :
 particles_(num_particles), initial_w_(initial_w), robots_(robots), map_(&map)
 {
   // Initialize the data stack for virtual robots
-  for (size_t i = 0; i < robots_.size(); i++)
+  for (size_t i = 0; i < data_robot_num; i++)
   {
     virtual_robots_u_[-robots_[i]->getId()] = std::stack<Eigen::VectorXd>();
     virtual_robots_z_[-robots_[i]->getId()] = std::stack<Eigen::MatrixXd>();

@@ -4,5 +4,7 @@
   <node name="slam_runner_node" pkg="slam_project" type="slam_runner_node" output="screen">
     <rosparam command="load" file="$(find slam_project)/config/config.yaml" />
   </node>
-  <node name="data_reader_node" pkg="slam_project" type="data_reader_node" />
+  <node name="data_reader_node" pkg="slam_project" type="data_reader_node" >
+    <rosparam command="load" file="$(find slam_project)/config/config.yaml" />
+  </node>
 </launch>

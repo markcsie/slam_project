@@ -1,9 +1,12 @@
 ## NOTE: dont put comments immediately after a key:string, comments will be interpreted as '\t'; also, usespace key instead of \TAB for ANY spacing!! (yaml-cpp is still buggy for parsing)
 
+data:
+  num_robots: 3
+
 slam:
-  num_particles: 100
+  num_particles: 1
   initial_w: 1.0
   # motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-  motion_noise: [1, 1, 1, 1, 1, 1]
+  motion_noise: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
   
   measurement_noise: [0.0167, 0.000736589]

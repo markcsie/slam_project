@@ -328,14 +328,14 @@ bool add(slam_project::requestBarcode::Request &req,
 //multi robot
 int main(int argc, char **argv)
 {
-  int n = 3; //number of robots
   readData();
-  readMultiData(n);
-
-
-
+  
   ros::init(argc, argv, "data_reader"); //node name "data_reader"
-  ros::NodeHandle node;
+  ros::NodeHandle node("~");
+  
+  int num_robots; //number of robots
+  node.param<int>("data/num_robots", num_robots, 1);
+  readMultiData(num_robots);
 
   ros::Publisher dataPublisher2 = node.advertise<slam_project::Robot_Odometry>("/publishMsg2", 100000);
   ros::ServiceServer service = node.advertiseService("requestData", add);
@@ -344,19 +344,18 @@ int main(int argc, char **argv)
   ros::Rate rate(100);
   ROS_INFO("start spinning");
   int j = 0;
-  kk.resize(n, 0);
+  kk.resize(num_robots, 0);
 
   while (dataPublisher2.getNumSubscribers() == 0)
   {
   }
-  
   while (ros::ok())
   {
 //    cout<<j<<endl;
     if (j < 7000)
     {
 //      dataPublisher2.publish(sendMsg_Odometry(j));
-      dataPublisher2.publish(sendMultiMsg_Odometry(j, n));
+      dataPublisher2.publish(sendMultiMsg_Odometry(j, num_robots));
       j++;
     }
 

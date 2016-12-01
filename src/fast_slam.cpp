@@ -52,8 +52,8 @@ void FastSlam::process(const Eigen::VectorXd &u, const Eigen::MatrixXd &features
   }
   else
   {
-    std::cout << "ggg features " << std::endl;
-    std::cout << features << std::endl;
+//    std::cout << "ggg features " << std::endl;
+//    std::cout << features << std::endl;
     // implement the algorithm in Table 13.1
     std::vector<double> weights(particles_.size(), 1.0);
     for (size_t i = 0; i < num_measurements; i++)
