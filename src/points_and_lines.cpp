@@ -34,6 +34,7 @@ ros::Publisher pub_slam_path4;
 ros::Publisher pub_slam_path5;
 
 ros::Publisher pub_landmark;
+ros::Publisher pub_particle;
 
 geometry_msgs::Point p;
 ros::Publisher marker_pub3;
@@ -373,6 +374,19 @@ void update_landmark(const slam_project::Robot_Path_Map& subMsg){
   pub_landmark.publish(landmark_poses);
 }
 
+void update_particle(const slam_project::Robot_Path_Map& subMsg){
+  geometry_msgs::PoseArray particle_poses;
+  particle_poses.header.frame_id = "map";
+  particle_poses.header.stamp = ros::Time::now();
+ 
+  for (int i=0; i<subMsg.px.size(); i++){
+    geometry_msgs::Pose cur_p;
+    cur_p.position.x = subMsg.px[i];
+    cur_p.position.y = subMsg.py[i];
+    particle_poses.poses.push_back(cur_p);
+  }
+  pub_particle.publish(particle_poses);
+}
 
 void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 {
@@ -391,6 +405,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
     update_groundtruth(subMsg);
     update_slampath(subMsg);
     update_landmark(subMsg);
+    update_particle(subMsg);
     /*vector<int> rid;
     for (int i=0; i<subMsg.robot_id.size(); i++)
       rid.push_back(subMsg.robot_id[i]);
@@ -565,6 +580,7 @@ int main(int argc, char** argv)
 //  landmark_poses.header.stamp = ros::Time::now();
   pub_landmark = n.advertise<geometry_msgs::PoseArray>("slam_landmark", 10000);
 
+  pub_particle = n.advertise<geometry_msgs::PoseArray>("slam_particle", 10000);
   //groundtruth landmark
   marker_pub3 = n.advertise<visualization_msgs::Marker>("visualization_marker3", 100000);
   //slam landmark

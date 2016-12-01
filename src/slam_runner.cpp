@@ -412,8 +412,8 @@ int main(int argc, char **argv)
   robots.push_back(std::shared_ptr<const RobotModelInterface>(&robot_5)); // robot 5 // TODO: different models?
   
   std::vector<Eigen::VectorXd> initial_x(robots.size(), Eigen::VectorXd::Zero(3)); // TODO: parameter or random, particles_[i].x_ = robot.getRandomX(map_);
-//  initial_x[0] << 1.916028, -2.676211, 0.390500;
-  initial_x[0] << 1.683400, 2.628217, 1.366200;
+  initial_x[0] << 1.916028, -2.676211, 0.390500;
+//  initial_x[0] << 1.683400, 2.628217, 1.366200;
   initial_x[1] << 0.611662, -3.520002, 0.319200;
   initial_x[2] << 1.683400, 2.628217, 1.366200;
   initial_x[3] << 3.890500, 0.595554, 2.095700;
