@@ -421,6 +421,7 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
   robots_error_file << std::endl;
   robots_error_file.flush();
   
+  double total_landmark_error = 0.0;
   for (size_t i = 0; i < subMsg.landmark_x.size(); i++)
   {
     size_t j = 0;
@@ -433,12 +434,16 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
       j++;
     }
     // calculate error TODO: DecMultiFastSlam
-    double landmark_error_ = std::sqrt(std::pow(subMsg.landmark_x[i] - landmark_groundtruth[j].x, 2) + std::pow(subMsg.landmark_y[i] - landmark_groundtruth[j].y, 2));
-    landmarks_error_file << landmark_error_ << " ";
+    double landmark_error = std::sqrt(std::pow(subMsg.landmark_x[i] - landmark_groundtruth[j].x, 2) + std::pow(subMsg.landmark_y[i] - landmark_groundtruth[j].y, 2));
+    total_landmark_error += landmark_error;
   }
-  if (subMsg.landmark_x.size() > 0) 
+  if (subMsg.landmark_x.size() > 0)
   {
-    landmarks_error_file << std::endl;
+    landmarks_error_file << total_landmark_error / static_cast<double>(subMsg.landmark_x.size()) << std::endl;
+  }
+  else 
+  {
+    landmarks_error_file << 0 << std::endl;
   }
   landmarks_error_file.flush();  
     
