@@ -416,7 +416,9 @@ void publishMsg_callback(const slam_project::Robot_Path_Map& subMsg)
 //  {
     // calculate error TODO: DecMultiFastSlam
 //    std::cout << "subMsg.robot_id[i] " << subMsg.robot_id[i] << std::endl;
-    double position_error = std::sqrt(std::pow(subMsg.x[2] - subMsg.rx[0], 2) + std::pow(subMsg.y[2] - subMsg.ry[0], 2));
+    // multi
+//    double position_error = std::sqrt(std::pow(subMsg.x[2] - subMsg.rx[0], 2) + std::pow(subMsg.y[2] - subMsg.ry[0], 2));
+    double position_error = std::sqrt(std::pow(subMsg.x[1] - subMsg.rx[0], 2) + std::pow(subMsg.y[1] - subMsg.ry[0], 2));
     robots_error_file << position_error << " ";
 //  }
   robots_error_file << std::endl;
@@ -654,7 +656,7 @@ int main(int argc, char** argv)
   marker_pub3.publish(points3);
   
   string path = ros::package::getPath("slam_project");
-  int robot_num = 3;  
+  int robot_num = 5;  
   multi_groundtruth.resize(robot_num);
   poses.resize(robot_num);
   slam_poses.resize(robot_num);

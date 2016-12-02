@@ -69,32 +69,6 @@ target_link_libraries(data_reader_node
   ${catkin_LIBRARIES}
 )
 
-add_executable(test_draw_node 
-  src/test_draw.cpp
-)
-
-target_link_libraries(test_draw_node
-  ${catkin_LIBRARIES}
-)
-
-add_executable(draw_node 
-  src/draw.cpp
-)
-
-target_link_libraries(draw_node
-  ${catkin_LIBRARIES}
-)
-
-add_executable(draw2_node 
-  src/draw2.cpp
-)
-
-target_link_libraries(draw2_node
-  ${catkin_LIBRARIES}
-)
-
-
-
 add_executable(slam_runner_node 
   src/slam_runner.cpp
   src/fast_slam.cpp
@@ -122,6 +96,3 @@ target_link_libraries(basic_shapes ${catkin_LIBRARIES})
 add_dependencies(points_and_lines slam_project_generate_messages_cpp)
 add_dependencies(data_reader_node slam_project_generate_messages_cpp)
 add_dependencies(slam_runner_node slam_project_generate_messages_cpp)
-
-add_dependencies(draw_node slam_project_generate_messages_cpp)
-add_dependencies(draw2_node slam_project_generate_messages_cpp)

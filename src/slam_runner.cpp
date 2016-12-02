@@ -278,11 +278,11 @@ void SlamRunner::frameCallback(const slam_project::Robot_Odometry &msg)
   
   if (msg.robot_num == 1) 
   {
-    fast_slam_.process(multi_u[0], multi_z[0]);
-    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
+//    fast_slam_.process(multi_u[0], multi_z[0]);
+//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam_.getParticles());
     
-//    fast_slam2_.process(multi_u[0], multi_z[0]);
-//    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
+    fast_slam2_.process(multi_u[0], multi_z[0]);
+    slam_project::Robot_Path_Map path_msg = postProcess(msg.id, fast_slam2_.getParticles());
     
     dataPublisher.publish(path_msg);
   }

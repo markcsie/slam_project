@@ -1,7 +1,7 @@
 ## NOTE: dont put comments immediately after a key:string, comments will be interpreted as '\t'; also, usespace key instead of \TAB for ANY spacing!! (yaml-cpp is still buggy for parsing)
 
 data:
-  num_robots: 3
+  num_robots: 5
 
 slam:
   num_particles: 100
