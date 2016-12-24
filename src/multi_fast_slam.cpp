@@ -45,7 +45,7 @@ void MultiFastSlam::process(const std::vector<Eigen::VectorXd> &u, const std::ve
   {
     //    std::cout << "ggg u[i] " << u[i].transpose() << std::endl;
     std::vector<double> weights_per_robot = updateRobot(robots_[i], u[i], features[i]);
-
+    ////////////////// TODO: incorrect updates of the same landmarks seen by multiple robots
     for (size_t j = 0; j < particles_.size(); j++)
     {
       weights[j] *= weights_per_robot[j];
